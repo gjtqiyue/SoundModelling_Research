@@ -45,17 +45,29 @@ Shader "Hidden/Heatmap" {
 			for (int i = 0; i < _Points_Length; i++)
 			{
 				// Calculates the contribution of each point
-				half di = distance(output.worldPos, _Points[i].xyz);
+				/*half di = distance(output.worldPos, _Points[i].xyz);
 
 				half ri = _Properties[i].x;
+				half hi = 1 - saturate(di / ri);*/
+
+				half di = distance(output.worldPos, _Points[i].xyz);
+
+				half ri = _Properties[i].z / _Properties[i].x * _Properties[i].y; // volume / fadingSpeed * stepDistance 
 				half hi = 1 - saturate(di / ri);
 
-				h += hi * _Properties[i].y;
+				h += hi;
 			}
 
 			// Converts (0-1) according to the heat texture
 			h = saturate(h);
-			half4 color = tex2D(_HeatTex, fixed2(h, 0.5));
+			half4 color;
+			if (h < 0.05) {
+				color = tex2D(_HeatTex, fixed2(h, 0.5));
+			}
+			else {
+				color = tex2D(_HeatTex, fixed2(h, 0.5));
+			}
+			
 			return color;
 		}
 		ENDCG

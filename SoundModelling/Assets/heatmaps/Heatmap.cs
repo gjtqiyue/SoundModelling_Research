@@ -14,18 +14,21 @@ public class Heatmap : MonoBehaviour
 
     public int count;
 
-    public void UpdateData(List<MapPointData>[] data)
+    private void Start()
+    {
+        material.SetVectorArray("_Points", new Vector4[1000]);
+        material.SetVectorArray("_Properties", new Vector4[1000]);
+    }
+
+    public void UpdateData(List<MapPointData> data)
     {
         positions.Clear();
         properties.Clear();
 
-        for (int i = 0; i < data.Length; i++)
+        for (int i = 0; i < data.Count; i++)
         {
-            for (int j = 0; j < data[i].Count; j++)
-            {
-                positions.Add(new Vector4(data[i][j].position.x, data[i][j].position.y, data[i][j].position.z, 0));
-                properties.Add(new Vector4(data[i][j].radius, data[i][j].intensity, 0, 0));
-            }
+            positions.Add(new Vector4(data[i].position.x, data[i].position.y, data[i].position.z, 0));
+            properties.Add(new Vector4(data[i].fadingSpeed, data[i].stepDistance, data[i].original_volume, 0));
         }
 
         count = positions.Count;
@@ -36,15 +39,16 @@ public class Heatmap : MonoBehaviour
     {
         //count = positions.Count;
         //UpdateShader();
+        for (int i = 0; i < positions.Count; i++)
+        {
+            positions[i] += new Vector4(Random.Range(-5f, +5f), 0, Random.Range(-5f, +5f), 0) * Time.deltaTime;
+        }
     }
 
     private void UpdateShader()
     {
         material.SetInt("_Points_Length", positions.Count);
-        for (int i = 0; i < positions.Count; i++)
-        {
-            positions[i] += new Vector4(Random.Range(-0.1f, +0.1f), Random.Range(-0.1f, +0.1f), 0, 0) * Time.deltaTime;
-        }
+       
         material.SetVectorArray("_Points", positions.ToArray());
         material.SetVectorArray("_Properties", properties.ToArray());
     }

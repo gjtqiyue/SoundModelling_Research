@@ -26,6 +26,8 @@ namespace SoundSystem
 
         [SerializeField]
         private List<MapPointData>[] soundRayData;
+        [SerializeField]
+        private List<MapPointData> mapKeyPoints;  //point that is important
         private Queue<Sound> soundQueue;
 
         private Ray r;
@@ -35,31 +37,39 @@ namespace SoundSystem
 
         private void Start()
         {
+            heatMapRadius = fadingSpeed;
             sline = GetComponent<LineRenderer>();
             //sline.enabled = true;
             soundQueue = new Queue<Sound>();
             //soundQueue.Enqueue(new Sound(agents[0], volume));
             blocks = new ArrayList();
             //soundQueue.Enqueue(new Sound(agents[0], volume));
+            
         }
 
         private void Update()
         {
-            soundQueue.Enqueue(new Sound(agents[0], volume));
+            soundQueue.Enqueue(new Sound(agents[0], agents[0].transform.position, volume));
+            soundQueue.Enqueue(new Sound(agents[1], agents[1].transform.position, volume));
             Calculate();
-            heatMap.UpdateData(soundRayData);
+            
         }
 
         public void Calculate()
         {
-            if (soundQueue.Count > 0)
+            mapKeyPoints = new List<MapPointData>();
+
+            while (soundQueue.Count > 0)
             {
                 Sound sound = soundQueue.Dequeue();
 
                 soundRayData = new List<MapPointData>[rayFrequency];
 
+
                 float steps = sound.volume / fadingSpeed;
                 float spreadDistance = steps * stepDistance;
+
+                mapKeyPoints.Add(new MapPointData(sound.sid, sound.producedPos, sound.volume, fadingSpeed, stepDistance));
 
                 if (blocks.Count > 0)
                 {
@@ -109,19 +119,44 @@ namespace SoundSystem
                     soundRayData[i] = list;
                 }
             }
+
+            heatMap.UpdateData(mapKeyPoints);
+
+            //TODO: remove the points related to this sound when finish
+            //RemovePointsOfSound(sound.sid);
+        }
+
+        private void RemovePointsOfSound(int id)
+        {
+            List<int> indices = new List<int>();
+            for (int i = 0; i < mapKeyPoints.Count; i++)
+            {
+                if (mapKeyPoints[i].pid == id)
+                {
+                    indices.Add(i);
+                }
+            }
+
+            foreach (int index in indices)
+            {
+                mapKeyPoints.RemoveAt(index);
+            }
         }
 
         private void RayCastFromPoint(Sound sound, Ray last_ray, RaycastHit last_hit, float volume, int reflectCount, List<MapPointData> list)
         {
-            if (volume < 0.1f || reflectCount == reflectionLimit)
-            {
-                return;
-            }
-
             float distance = last_hit.distance;
             float steps = distance / stepDistance;
 
             float remainVol = volume - steps * fadingSpeed - deflectionRate;
+
+            if (remainVol < 0.1f || reflectCount == reflectionLimit)
+            {
+                return;
+            }
+            
+            mapKeyPoints.Add(new MapPointData(sound.sid, last_hit.point, remainVol, fadingSpeed, stepDistance));
+
             Vector3 reflectVec = Vector3.Reflect(last_ray.direction, last_hit.normal);
             //Debug.Log(reflectVec);
             //calculate the reflection and start volume
@@ -163,7 +198,7 @@ namespace SoundSystem
                 float radius = heatMapRadius;
                 Vector3 position = ray.origin + ray.direction * length;
 
-                list.Add(new MapPointData(position, radius, intensity));
+                list.Add(new MapPointData(sound.sid, position, volume, radius, intensity));
                 //DrawIndicator(volume, ray, length, intensity);
             }
 
@@ -171,7 +206,7 @@ namespace SoundSystem
             if (includeDestination)
             {
                 float length = steps * stepDistance;
-                list.Add(new MapPointData(destination, heatMapRadius, intensityAtDestination));
+                list.Add(new MapPointData(sound.sid, destination, volume, heatMapRadius, intensityAtDestination));
                 //DrawIndicator(volume, ray, length, intensityAtDestination);
             }
         }

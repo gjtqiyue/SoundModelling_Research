@@ -2,16 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class MapPointData
 {
+    public int pid;
     public Vector3 position;
-    public float radius;
-    public float intensity;
+    public float original_volume;
+    public float fadingSpeed;
+    public float stepDistance;
 
-    public MapPointData(Vector3 p, float r, float i)
+    public MapPointData(int id, Vector3 p, float v, float f, float s)
     {
+        pid = id;
         position = p;
-        radius = r;
-        intensity = i;
+        original_volume = v;
+        fadingSpeed = f;
+        stepDistance = s;
     }
 }
