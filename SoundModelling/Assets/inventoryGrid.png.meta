@@ -1,0 +1,376 @@
+fileFormatVersion: 2
+guid: eebc9b5eb3c3c5e47b85c4f41bb076f3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6783244678627899302
+    second: inventoryGrid_row1
+  - first:
+      213: 678371487341329113
+    second: inventoryGrid_row2
+  - first:
+      213: 6128262611552052668
+    second: inventoryGrid_row3
+  - first:
+      213: -5906634417897214451
+    second: inventoryGrid_row4
+  - first:
+      213: -6981722463143061643
+    second: inventoryGrid_row5
+  - first:
+      213: 2629039037815137992
+    second: inventoryGrid_row6
+  - first:
+      213: -57619315875336016
+    second: inventoryGrid_row7
+  - first:
+      213: -1121253472885451807
+    second: inventoryGrid_row8
+  - first:
+      213: -2750449384328738866
+    second: inventoryGrid_8
+  - first:
+      213: 4722367109626666773
+    second: inventoryGrid_9
+  - first:
+      213: 4083856412806399332
+    second: inventoryGrid_10
+  - first:
+      213: -2791358826832554113
+    second: inventoryGrid_11
+  - first:
+      213: 6718861598865062090
+    second: inventoryGrid_12
+  - first:
+      213: -6263372539945259823
+    second: inventoryGrid_13
+  - first:
+      213: -7299943248667189683
+    second: inventoryGrid_14
+  - first:
+      213: 4854521294584108061
+    second: inventoryGrid_15
+  - first:
+      213: 6470106036035083529
+    second: inventoryGrid_16
+  - first:
+      213: 6228523450367495341
+    second: inventoryGrid_17
+  - first:
+      213: 6010228893645793977
+    second: inventoryGrid_18
+  - first:
+      213: -614389599443962109
+    second: inventoryGrid_19
+  - first:
+      213: 8258803789503466861
+    second: inventoryGrid_20
+  - first:
+      213: -6682022123080725494
+    second: inventoryGrid_21
+  - first:
+      213: 2010796149038477926
+    second: inventoryGrid_22
+  - first:
+      213: 2500038822985085438
+    second: inventoryGrid_23
+  - first:
+      213: -4491481850371841763
+    second: inventoryGrid_24
+  - first:
+      213: -7628637207007524436
+    second: inventoryGrid_25
+  - first:
+      213: -3310091799923024407
+    second: inventoryGrid_26
+  - first:
+      213: -6324976233192835178
+    second: inventoryGrid_27
+  - first:
+      213: 7053784614509464438
+    second: inventoryGrid_28
+  - first:
+      213: 3529699365719019992
+    second: inventoryGrid_29
+  - first:
+      213: -2044828103709313721
+    second: inventoryGrid_30
+  - first:
+      213: 384996821684065952
+    second: inventoryGrid_31
+  externalObjects: {}
+  serializedVersion: 10
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  platformSettings:
+  - serializedVersion: 2
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+  - serializedVersion: 2
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+  - serializedVersion: 2
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: inventoryGrid_row1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 437.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 936fc1d28949e1f46a9c865e8e43bd9d
+      internalID: -6783244678627899302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row2
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 375.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33bd489dff5098b4a883d191f3a245cb
+      internalID: 678371487341329113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row3
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 313.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 435245f4341ae644586d2ca3936c4a0d
+      internalID: 6128262611552052668
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 251.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 126aa18fff1c90941b2badfe4b182907
+      internalID: -5906634417897214451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 189.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a06d12b3fadb95d4a8c4399c7d92ddd4
+      internalID: -6981722463143061643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 127.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2215d8dbbf1eec846a2f7548e18aaa1c
+      internalID: 2629039037815137992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 65.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d6f37fdcf94cb9408a4d40c3439318e
+      internalID: -57619315875336016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: inventoryGrid_row8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 3.5
+        width: 250
+        height: 62.5
+      alignment: 1
+      pivot: {x: 0, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17f75a7d2fa2dad4496a8222065056d9
+      internalID: -1121253472885451807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 841ca3b90083bb84ab97f435c9274a8a
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

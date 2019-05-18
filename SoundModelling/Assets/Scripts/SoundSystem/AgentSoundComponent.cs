@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//a game component for gameobject
 namespace SoundSystem
 {
-    public class Controller : MonoBehaviour
+    public class AgentSoundComponent : MonoBehaviour
     {
-        [SerializeField]
-        List<GameObject> agents = new List<GameObject>();
-
         public GameObject indicator;
         public Heatmap heatMap;
 
@@ -19,9 +17,6 @@ namespace SoundSystem
         public int reflectionLimit;     //how many times it reflect a surface
         public float deflectionRate;      //how much the volume get deducted every time it reflects
 
-        [Header("HeatMapAttribute")]
-        public float heatMapRadius;
-
         public int volume;
 
         [SerializeField]
@@ -31,32 +26,37 @@ namespace SoundSystem
         private Queue<Sound> soundQueue;
 
         private Ray r;
-        private LineRenderer sline;
 
         private ArrayList blocks;
 
         private void Start()
         {
-            heatMapRadius = fadingSpeed;
-            sline = GetComponent<LineRenderer>();
-            //sline.enabled = true;
             soundQueue = new Queue<Sound>();
-            //soundQueue.Enqueue(new Sound(agents[0], volume));
             blocks = new ArrayList();
-            //soundQueue.Enqueue(new Sound(agents[0], volume));
-            
+            SystemController.Instance.RegisterAgent(gameObject);
         }
 
         private void Update()
         {
-            soundQueue.Enqueue(new Sound(agents[0], agents[0].transform.position, volume));
-            soundQueue.Enqueue(new Sound(agents[1], agents[1].transform.position, volume));
             Calculate();
-            
+        }
+
+        // called when produce a sound
+        public void MakeSound(GameObject agent, Vector3 pos, int volume)
+        {
+            soundQueue.Enqueue(new Sound(agent, pos, volume));
+        }
+
+        // called when a sound can reach this object
+        public void ReceiveSound(GameObject from, float intensity)
+        {
+            Debug.Log("Receive sound from " + from.name + " At intensity " + intensity);
         }
 
         public void Calculate()
         {
+            if (soundQueue.Count <= 0) return;
+
             mapKeyPoints = new List<MapPointData>();
 
             while (soundQueue.Count > 0)
@@ -90,7 +90,7 @@ namespace SoundSystem
                     Ray ray = new Ray
                     {
                         origin = sound.producer.transform.position,
-                        direction = new Vector3(Mathf.Sin(AngleToRadian(angle)), 0, Mathf.Cos(AngleToRadian(angle)))
+                        direction = new Vector3(Mathf.Sin(Utility.AngleToRadian(angle)), 0, Mathf.Cos(Utility.AngleToRadian(angle)))
                     };
 
                     sound.producer.GetComponent<Collider>().enabled = false;
@@ -102,66 +102,47 @@ namespace SoundSystem
                     //hit check
                     if (hit.transform == null)
                     {
-                        Debug.DrawLine(ray.origin, ray.origin + ray.direction * spreadDistance, Color.red);
+                        Debug.DrawLine(ray.origin, ray.origin + ray.direction * spreadDistance, Color.red, 2);
                         //if hit nothing
                         //a straight line, we want to record the point along the ray
                         UpdateMapPoint(sound.volume, sound, ray.origin + ray.direction * spreadDistance, steps, list, ray, true);
                     }
                     else
                     {
-                        float nextSteps = hit.distance / stepDistance;
+                        float distance = hit.distance;
+                        float nextSteps = distance / stepDistance;
+
+                        float remainVol = volume - nextSteps * fadingSpeed - deflectionRate;
+
+                        CheckHitTarget(hit.transform.gameObject, remainVol);
+
                         UpdateMapPoint(sound.volume, sound, hit.point, nextSteps, list, ray, false);
                         //sline.SetPosition(1, hit.point);
-                        Debug.DrawLine(ray.origin, hit.point, Color.red);
-                        RayCastFromPoint(sound, ray, hit, sound.volume, 0, list);
+                        Debug.DrawLine(ray.origin, hit.point, Color.red, 2);
+                        RayCastFromPoint(sound, ray, hit, remainVol, 0, list);
                     }
 
                     soundRayData[i] = list;
                 }
             }
 
-            heatMap.UpdateData(mapKeyPoints);
-
-            //TODO: remove the points related to this sound when finish
-            //RemovePointsOfSound(sound.sid);
+            //heatMap.UpdateData(mapKeyPoints);
         }
 
-        private void RemovePointsOfSound(int id)
+        private void RayCastFromPoint(Sound sound, Ray last_ray, RaycastHit last_hit, float remainVol, int reflectCount, List<MapPointData> list)
         {
-            List<int> indices = new List<int>();
-            for (int i = 0; i < mapKeyPoints.Count; i++)
-            {
-                if (mapKeyPoints[i].pid == id)
-                {
-                    indices.Add(i);
-                }
-            }
-
-            foreach (int index in indices)
-            {
-                mapKeyPoints.RemoveAt(index);
-            }
-        }
-
-        private void RayCastFromPoint(Sound sound, Ray last_ray, RaycastHit last_hit, float volume, int reflectCount, List<MapPointData> list)
-        {
-            float distance = last_hit.distance;
-            float steps = distance / stepDistance;
-
-            float remainVol = volume - steps * fadingSpeed - deflectionRate;
-
             if (remainVol < 0.1f || reflectCount == reflectionLimit)
             {
                 return;
             }
-            
+
             mapKeyPoints.Add(new MapPointData(sound.sid, last_hit.point, remainVol, fadingSpeed, stepDistance));
 
             Vector3 reflectVec = Vector3.Reflect(last_ray.direction, last_hit.normal);
             //Debug.Log(reflectVec);
             //calculate the reflection and start volume
             //shoot ray again
-            steps = remainVol / fadingSpeed;
+            float steps = remainVol / fadingSpeed;
             float spreadDist = steps * stepDistance;
 
             Ray ray = new Ray()
@@ -175,17 +156,24 @@ namespace SoundSystem
             if (hit.transform == null)
             {
                 //nothing
-                Debug.DrawRay(ray.origin, reflectVec * spreadDist, Color.blue);
+                Debug.DrawRay(ray.origin, reflectVec * spreadDist, Color.blue, 2);
                 UpdateMapPoint(remainVol, sound, ray.origin + reflectVec * spreadDist, steps, list, ray, true);
             }
             else
             {
+                float distance = hit.distance;
+                float nextSteps = distance / stepDistance;
+
+                float remain = remainVol - nextSteps * fadingSpeed - deflectionRate;
+
+                CheckHitTarget(hit.transform.gameObject, remainVol);
+
                 //Debug.Log("ray " + ray.origin + " " + hit.point);
-                Debug.DrawRay(ray.origin, reflectVec * hit.distance, Color.blue);
+                Debug.DrawRay(ray.origin, reflectVec * hit.distance, Color.blue, 2);
                 steps = hit.distance / stepDistance;
-                UpdateMapPoint(remainVol, sound, hit.point, steps, list, ray, false);
+                UpdateMapPoint(remainVol, sound, hit.point, nextSteps, list, ray, false);
                 //keep reflecting
-                RayCastFromPoint(sound, ray, hit, remainVol, ++reflectCount, list);
+                RayCastFromPoint(sound, ray, hit, remain, ++reflectCount, list);
             }
         }
 
@@ -195,19 +183,18 @@ namespace SoundSystem
             {
                 float length = k * stepDistance;
                 float intensity = (volume - fadingSpeed * k) / volume;
-                float radius = heatMapRadius;
                 Vector3 position = ray.origin + ray.direction * length;
 
-                list.Add(new MapPointData(sound.sid, position, volume, radius, intensity));
-                //DrawIndicator(volume, ray, length, intensity);
+                list.Add(new MapPointData(sound.sid, position, volume, fadingSpeed, intensity));
+                DrawIndicator(volume, ray, length, intensity);
             }
 
             float intensityAtDestination = (volume - fadingSpeed * steps) / volume + 0.1f;
             if (includeDestination)
             {
                 float length = steps * stepDistance;
-                list.Add(new MapPointData(sound.sid, destination, volume, heatMapRadius, intensityAtDestination));
-                //DrawIndicator(volume, ray, length, intensityAtDestination);
+                list.Add(new MapPointData(sound.sid, destination, volume, fadingSpeed, intensityAtDestination));
+                DrawIndicator(volume, ray, length, intensityAtDestination);
             }
         }
 
@@ -215,21 +202,19 @@ namespace SoundSystem
         {
             GameObject obj = Instantiate(indicator, ray.origin + ray.direction * length, Quaternion.identity);
             obj.GetComponent<PointIntensity>().intensity = intensity;
-            float f = intensity / volume;
+            float f = intensity;
             obj.GetComponent<MeshRenderer>().material.color = new Color(f, 1 - f, 1 - f, 1);
             blocks.Add(obj);
             return ray;
         }
 
-        private static float AngleToRadian(float angle)
+        private void CheckHitTarget(GameObject obj, float intensity)
         {
-            return angle / 360 * 2 * Mathf.PI;
-        }
-
-        private void OnDrawGizmos()
-        {
-            //Gizmos.color = Color.red;
-            //Gizmos.DrawRay(r);
+            AgentSoundComponent cpnt = obj.GetComponent<AgentSoundComponent>();
+            if (cpnt)
+            {
+                cpnt.ReceiveSound(gameObject, intensity);
+            }
         }
     }
 }
