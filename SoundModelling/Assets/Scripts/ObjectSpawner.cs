@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class ObjectSpawner : MonoBehaviour
 {
+    public bool snapToGrid;
+
     [HideInInspector]
     public List<GameObject> objects;
 

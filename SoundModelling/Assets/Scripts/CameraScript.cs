@@ -22,7 +22,7 @@ public class CameraScript : MonoBehaviour
 
         if (following)
         {
-            transform.position = Vector3.MoveTowards(transform.position , dest, followSpeed);
+            transform.position = Vector3.MoveTowards(transform.position , dest, followSpeed * Time.deltaTime);
 
             if (Vector3.Distance(dest, transform.position) < 0.5)
             {

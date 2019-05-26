@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoundSystem;
 
-public class Player : MonoBehaviour
+public class Player : AgentWithSound
 {
     public float speed;
 
@@ -25,7 +25,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        GetComponent<AgentSoundComponent>().MakeSound(gameObject, transform.position, movingVolume);
+        GetComponent<AgentSoundComponent>().MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk);
         if (isWalking)
         {
             if (timer <= 0.05)
@@ -45,7 +45,7 @@ public class Player : MonoBehaviour
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
 
-        transform.position = transform.position + new Vector3(h * speed * Time.deltaTime, 0, v * speed * Time.deltaTime);
+        transform.position = transform.position + new Vector3(h * speed * Time.fixedDeltaTime, 0, v * speed * Time.fixedDeltaTime);
 
         if (h == 0 && v == 0)
         {
@@ -56,5 +56,10 @@ public class Player : MonoBehaviour
         {
             isWalking = true;
         }
+    }
+
+    public override void SearchSoundSource(List<PointIntensity> path)
+    {
+        throw new System.NotImplementedException();
     }
 }
