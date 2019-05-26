@@ -8,13 +8,23 @@ public class CameraScript : MonoBehaviour
 
     public float followRange;  // start follow player after exceed this distance
     public float followSpeed;
-    public float height;
+    public Vector3 angle;
+    public float distance;
 
     public bool following = true;
 
+    private void Start()
+    {
+        Vector3 direction = new Vector3(Mathf.Cos(AngleToRadian(angle.y)), Mathf.Sin(AngleToRadian(angle.x)) + 1f, Mathf.Sin(AngleToRadian(angle.y)));
+        transform.rotation = Quaternion.LookRotation(-direction.normalized);
+    }
+
     private void FixedUpdate()
     {
-        Vector3 dest = playerTransform.position + new Vector3(0, height, 0);
+        Vector3 direction = new Vector3(Mathf.Cos(AngleToRadian(angle.y)), Mathf.Sin(AngleToRadian(angle.x)) + 1f, Mathf.Sin(AngleToRadian(angle.y)));
+        Vector3 dest = playerTransform.position + direction.normalized * distance;
+        Debug.Log(direction);
+
         if (Vector3.Distance(transform.position, dest) > followRange)
         {
             following = true;
@@ -24,10 +34,15 @@ public class CameraScript : MonoBehaviour
         {
             transform.position = Vector3.MoveTowards(transform.position , dest, followSpeed * Time.deltaTime);
 
-            if (Vector3.Distance(dest, transform.position) < 0.5)
+            if (Vector3.SqrMagnitude(dest - transform.position) < 0.5)
             {
                 following = false;
             }
         }
+    }
+
+    public float AngleToRadian(float angle)
+    {
+        return angle / 360 * 2 * Mathf.PI;
     }
 }

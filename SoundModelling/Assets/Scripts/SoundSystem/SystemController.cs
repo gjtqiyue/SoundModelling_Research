@@ -10,6 +10,13 @@ namespace SoundSystem
         [SerializeField]
         List<GameObject> agents = new List<GameObject>();
 
+        [Space]
+        [Header("Sound Property")]
+        public float stepDistance;      //distance for each time step
+        public float fadingSpeed;       //how fast the sound fades away
+        public int reflectionLimit;     //how many times it reflect a surface
+        public float deflectionRate;      //how much the volume get deducted every time it reflects
+
         private GameObject[,] map;
 
         [Space]

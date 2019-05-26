@@ -24,11 +24,8 @@ public class SoundSystemControllerEditor : Editor
         {
             systemController.startPoint = EditorGUILayout.Vector3Field("Start Point", systemController.startPoint);
 
-            GUILayout.BeginHorizontal();
             systemController.width = EditorGUILayout.IntField("Width", systemController.width);
-            GUILayout.Space(50f);
             systemController.length = EditorGUILayout.IntField("Length", systemController.length);
-            GUILayout.EndHorizontal();
 
             systemController.resolution = EditorGUILayout.Vector2Field("Resolution", systemController.resolution);
 
