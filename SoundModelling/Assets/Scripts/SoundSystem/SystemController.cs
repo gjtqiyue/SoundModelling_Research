@@ -12,10 +12,10 @@ namespace SoundSystem
 
         [Space]
         [Header("Sound Property")]
-        public float stepDistance;      //distance for each time step
-        public float fadingSpeed;       //how fast the sound fades away
-        public int reflectionLimit;     //how many times it reflect a surface
-        public float deflectionRate;      //how much the volume get deducted every time it reflects
+        public float stepDistance;          //distance for each time step
+        public float fadingSpeed;           //how fast the sound fades away
+        public int reflectionLimit;         //how many times it reflect a surface
+        public float deflectionRate;        //how much the volume get deducted every time it reflects
 
         private GameObject[,] map;
 
@@ -49,6 +49,8 @@ namespace SoundSystem
 
         [HideInInspector]
         public float currentHighestIntensity;
+
+        private List<int> modifiedMapGrids = new List<int>();
 
         public void RegisterAgent(GameObject agent)
         {
@@ -90,14 +92,25 @@ namespace SoundSystem
         {
             currentHighestIntensity = float.Epsilon;
 
-            for (int i = 0; i < resolution.x; i++)
+            if (modifiedMapGrids.Count > 0)
             {
-                for (int j = 0; j < resolution.y; j++)
+                for (int i=0; i<modifiedMapGrids.Count; i++)
                 {
-                    //clear out the color
-                    map[i, j].GetComponent<PointIntensity>().Reset();
+                    int num = modifiedMapGrids[i];
+                    int x = num / (int)resolution.y;
+                    int y = num % (int)resolution.y;
+                    map[x, y].GetComponent<PointIntensity>().Reset();
                 }
             }
+            modifiedMapGrids.Clear();
+            //for (int i = 0; i < resolution.x; i++)
+            //{
+            //    for (int j = 0; j < resolution.y; j++)
+            //    {
+            //        //clear out the color
+            //        map[i, j].GetComponent<PointIntensity>().Reset();
+            //    }
+            //}
         }
 
         private void Calculate()
@@ -113,13 +126,20 @@ namespace SoundSystem
 
         private void ResolveSoundCollision()
         {
-            for (int i = 0; i < resolution.x; i++)
+            for (int i=0; i<modifiedMapGrids.Count; i++)
             {
-                for (int j = 0; j < resolution.y; j++)
-                {
-                    map[i, j].GetComponent<PointIntensity>().MergeSoundFromDifferentSources();
-                }
+                int num = modifiedMapGrids[i];
+                int x = num / (int)resolution.y;
+                int y = num % (int)resolution.y;
+                map[x, y].GetComponent<PointIntensity>().MergeSoundFromDifferentSources();
             }
+            //for (int i = 0; i < resolution.x; i++)
+            //{
+            //    for (int j = 0; j < resolution.y; j++)
+            //    {
+            //        map[i, j].GetComponent<PointIntensity>().MergeSoundFromDifferentSources();
+            //    }
+            //}
         }
 
         private void ResolveSoundReceive()
@@ -134,13 +154,20 @@ namespace SoundSystem
 
         private void Paint()
         {
-            for (int i = 0; i < resolution.x; i++)
+            for (int i = 0; i < modifiedMapGrids.Count; i++)
             {
-                for (int j = 0; j < resolution.y; j++)
-                {
-                    map[i, j].GetComponent<PointIntensity>().PaintMap();
-                }
+                int num = modifiedMapGrids[i];
+                int x = num / (int)resolution.y;
+                int y = num % (int)resolution.y;
+                map[x, y].GetComponent<PointIntensity>().PaintMap();
             }
+            //for (int i = 0; i < resolution.x; i++)
+            //{
+            //    for (int j = 0; j < resolution.y; j++)
+            //    {
+            //        map[i, j].GetComponent<PointIntensity>().PaintMap();
+            //    }
+            //}
         }
 
         private List<PointIntensity> TrackSoundSource(Vector3 pos)
@@ -159,9 +186,10 @@ namespace SoundSystem
             while (true) {
                 //hill climbing
                 //Debug.Log(trace.Count + ": " + map[curX, curY].transform.position.ToString());
-                trace.Add(map[curX, curY].GetComponent<PointIntensity>());
+                PointIntensity pointIntensity = map[curX, curY].GetComponent<PointIntensity>();
+                trace.Add(pointIntensity);
 
-                float maxIntensity = map[curX, curY].GetComponent<PointIntensity>().net_intensity;
+                float maxIntensity = pointIntensity.net_intensity;
                 int maxX = curX;
                 int maxY = curY;
                 for (int i = -1; i <= 1; i++)
@@ -182,7 +210,7 @@ namespace SoundSystem
                     }
                 }
 
-                if (maxIntensity == map[curX, curY].GetComponent<PointIntensity>().net_intensity)
+                if (maxIntensity == pointIntensity.net_intensity)
                 {
                     //reach max
                     return trace;
@@ -208,6 +236,9 @@ namespace SoundSystem
             {
                 //Debug.Log(cellX + ", " + cellY);
                 map[cellX, cellY].GetComponent<PointIntensity>().AddNewSoundPoint(newIntensity, seg, source);
+
+                //add this point to modified list
+                modifiedMapGrids.Add(cellX * (int)resolution.y + cellY);
 
                 //draw yellow line to indicate the mapping
                 if (drawPointDistribution) { Debug.DrawLine(pos, map[cellX, cellY].transform.position, Color.yellow); }
@@ -239,7 +270,7 @@ namespace SoundSystem
 
                     var tempMaterial = new Material(renderer.sharedMaterial);
 
-                    tempMaterial.color = Color.white;
+                    tempMaterial.color = new Color(0, 0.5f, 0.5f);
 
                     renderer.sharedMaterial = tempMaterial;
 

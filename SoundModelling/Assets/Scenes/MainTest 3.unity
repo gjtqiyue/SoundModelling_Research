@@ -2193,15 +2193,10 @@ MonoBehaviour:
   indicator: {fileID: 4893596927471267063, guid: cbff41f76761faf4fa179849801319a9,
     type: 3}
   heatMap: {fileID: 348148316}
-  agent: {fileID: 828524501}
+  agent: {fileID: 0}
   rayFrequency: 50
-  stepDistance: 5
-  fadingSpeed: 5
-  reflectionLimit: 2
-  deflectionRate: 0.5
   drawIndicator: 0
   drawDebugLine: 0
-  mapKeyPoints: []
 --- !u!4 &828524500
 Transform:
   m_ObjectHideFlags: 0
@@ -2232,6 +2227,7 @@ MonoBehaviour:
   searchSpeed: 0.5
   waitTime: 2
   canMakeSound: 0
+  typeToMake: 0
   volume: 0
   patrolPoints: []
   status: 0
@@ -2818,8 +2814,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 1444786224}
   followRange: 7
-  followSpeed: 0.3
-  height: 50
+  followSpeed: 15
+  angle: {x: 90, y: -105, z: 0}
+  distance: 75
   following: 1
 --- !u!1001 &972302402
 PrefabInstance:
@@ -3403,6 +3400,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agents: []
+  stepDistance: 5
+  fadingSpeed: 2
+  reflectionLimit: 2
+  deflectionRate: 0.8
   startPoint: {x: -100, y: 0, z: -100}
   width: 200
   length: 200
@@ -3410,7 +3411,7 @@ MonoBehaviour:
   resolution: {x: 50, y: 50}
   quadPrefab: {fileID: 4873237353366160515, guid: 5276a2de0bc64564b8cdfd1f5d69a163,
     type: 3}
-  drawPointDistribution: 0
+  drawPointDistribution: 1
   scaleX: 0
   scaleY: 0
   count: 0
@@ -3897,7 +3898,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 10
   pace: 1
-  movingVolume: 20
+  movingVolume: 30
   isWalking: 0
   timer: 0
 --- !u!23 &1444786222
@@ -4004,14 +4005,9 @@ MonoBehaviour:
     type: 3}
   heatMap: {fileID: 348148316}
   agent: {fileID: 0}
-  rayFrequency: 30
-  stepDistance: 5
-  fadingSpeed: 3
-  reflectionLimit: 2
-  deflectionRate: 0.5
+  rayFrequency: 72
   drawIndicator: 0
   drawDebugLine: 0
-  mapKeyPoints: []
 --- !u!1001 &1470820535
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4886,15 +4882,10 @@ MonoBehaviour:
   indicator: {fileID: 4893596927471267063, guid: cbff41f76761faf4fa179849801319a9,
     type: 3}
   heatMap: {fileID: 348148316}
-  agent: {fileID: 1863891552}
+  agent: {fileID: 0}
   rayFrequency: 30
-  stepDistance: 5
-  fadingSpeed: 5
-  reflectionLimit: 2
-  deflectionRate: 0.5
   drawIndicator: 0
   drawDebugLine: 0
-  mapKeyPoints: []
 --- !u!54 &1863891547
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -4999,6 +4990,7 @@ MonoBehaviour:
   searchSpeed: 0.7
   waitTime: 2
   canMakeSound: 0
+  typeToMake: 0
   volume: 10
   patrolPoints:
   - {fileID: 1921556887}

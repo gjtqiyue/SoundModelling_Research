@@ -94,7 +94,7 @@ namespace SoundSystem
         public void PaintMap()
         {
             float value = Mathf.Clamp((net_intensity) / SystemController.Instance.currentHighestIntensity, 0f, 1f);
-            meshRenderer.sharedMaterial.color = new Color(value, 0.5f, 0.5f, 1);
+            meshRenderer.sharedMaterial.color = new Color(value, Mathf.Clamp(1-value, 0, 0.5f), Mathf.Clamp(1 - value, 0, 0.5f), 1);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SoundSystem;
 
+[RequireComponent(typeof(AgentSoundComponent))]
 public class Player : AgentWithSound
 {
     public float speed;
@@ -16,16 +17,18 @@ public class Player : AgentWithSound
     [SerializeField]
     float timer;
 
+    AgentSoundComponent soundCmpt;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        soundCmpt = GetComponent<AgentSoundComponent>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        GetComponent<AgentSoundComponent>().MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk);
+        soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk);
         if (isWalking)
         {
             if (timer <= 0.05)

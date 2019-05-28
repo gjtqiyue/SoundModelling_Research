@@ -29,11 +29,16 @@ namespace SoundSystem
 
         private ArrayList blocks;
 
+        SystemController system;
+        Collider _collider;
+
         private void Start()
         {
             soundQueue = new Queue<Sound>();
             soundSegmentQueue = new Queue<SoundSegment>();
             blocks = new ArrayList();
+            system = SystemController.Instance;
+            _collider = GetComponent<Collider>();
             SystemController.Instance.RegisterAgent(gameObject);
         }
 
@@ -49,14 +54,24 @@ namespace SoundSystem
             //Debug.Log("Receive sound from " + from.name + " At intensity " + intensity);
             //hill climb to find where the sound come from
             //Question: how often should we do it?
-            SystemController.Instance.RequestForSoundResolve(this);
+            system.RequestForSoundResolve(this);
         }
 
         public void DrawTrackToSoundSource(List<PointIntensity> track)
         {
-            for (int i = 0; i < track.Count - 1; i++)
+            if (gameObject.tag == "Player")
             {
-                Debug.DrawLine(track[i].pos, track[i+1].pos, Color.black, 2);
+                for (int i = 0; i < track.Count - 1; i++)
+                {
+                    Debug.DrawLine(track[i].pos, track[i + 1].pos, Color.green, 2);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < track.Count - 1; i++)
+                {
+                    Debug.DrawLine(track[i].pos, track[i + 1].pos, Color.black, 2);
+                }
             }
 
             if (agent)
@@ -76,8 +91,8 @@ namespace SoundSystem
 
                 float volume = sound.volume; // rayFrequency;
 
-                float steps = sound.volume / SystemController.Instance.fadingSpeed;
-                float spreadDistance = steps * SystemController.Instance.stepDistance;
+                float steps = sound.volume / system.fadingSpeed;
+                float spreadDistance = steps * system.stepDistance;
 
                 //mapKeyPoints.Add(new MapPointData(sound.sid, sound.producedPos, sound.volume, fadingSpeed, stepDistance));
 
@@ -111,7 +126,7 @@ namespace SoundSystem
         private void RayCastFromPoint(SoundSegment segment, Sound sound)
         {
             float remainVol = segment._volume;
-            if (remainVol < 0.1f || segment._reflectNum == SystemController.Instance.reflectionLimit)
+            if (remainVol < 0.1f || segment._reflectNum == system.reflectionLimit)
             {
                 return;
             }
@@ -126,12 +141,12 @@ namespace SoundSystem
 
             //calculate the reflection and start volume
             //shoot ray again
-            float steps = remainVol / SystemController.Instance.fadingSpeed;
-            float spreadDist = steps * SystemController.Instance.stepDistance;
+            float steps = remainVol / system.fadingSpeed;
+            float spreadDist = steps * system.stepDistance;
 
-            gameObject.GetComponent<Collider>().enabled = false;
+            _collider.enabled = false;
             Physics.Raycast(ray, out RaycastHit hit, spreadDist);
-            gameObject.GetComponent<Collider>().enabled = true;
+            _collider.enabled = true;
 
             if (hit.transform == null)
             {
@@ -146,9 +161,9 @@ namespace SoundSystem
 
                 //calculate remain volume at this point
                 float distance = hit.distance;
-                float nextSteps = distance / SystemController.Instance.stepDistance;
+                float nextSteps = distance / system.stepDistance;
 
-                float remain = (remainVol - nextSteps * SystemController.Instance.fadingSpeed) * SystemController.Instance.deflectionRate;
+                float remain = (remainVol - nextSteps * system.fadingSpeed) * system.deflectionRate;
 
                 //if the hit target is an Agent we notify them
                 CheckHitTarget(hit.transform.gameObject, remainVol);
@@ -156,12 +171,12 @@ namespace SoundSystem
                 //Debug.Log("ray " + ray.origin + " " + hit.point);
                 if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * hit.distance, Color.blue); }
 
-                steps = hit.distance / SystemController.Instance.stepDistance;
+                steps = hit.distance / system.stepDistance;
 
                 UpdateMapPoint(segment, sound, nextSteps, false);
 
                 //keep reflecting, treat it as a new sound
-                soundSegmentQueue.Enqueue(new SoundSegment(segmentId++, hit.point, reflectVec, remain, segment._type));
+                soundSegmentQueue.Enqueue(new SoundSegment(segment._id++, hit.point, reflectVec, remain, segment._type));
                 //RayCastFromPoint(sound, ray, hit, remain, ++reflectCount);
             }
         }
@@ -172,22 +187,22 @@ namespace SoundSystem
             for (int k = 0; k < steps; k++)
             {
                 // operation for each in between sound points
-                float length = k * SystemController.Instance.stepDistance;
-                float intensity = (segment._volume - SystemController.Instance.fadingSpeed * k);
+                float length = k * system.stepDistance;
+                float intensity = (segment._volume - system.fadingSpeed * k);
                 Vector3 position = segment._ray.origin + segment._ray.direction * length;
 
                 if (drawIndicator)
                     DrawIndicator(segment._volume, segment._ray, length, intensity);
 
                 //map it to the map in the system controller
-                SystemController.Instance.MapSoundData(position, intensity, segment, sound.producer);
+                system.MapSoundData(position, intensity, segment, sound.producer);
 
             }
 
-            float intensityAtDestination = (segment._volume - SystemController.Instance.fadingSpeed * steps) + 0.1f;
+            float intensityAtDestination = (segment._volume - system.fadingSpeed * steps) + 0.1f;
             if (includeDestination)
             {
-                float length = steps * SystemController.Instance.stepDistance;
+                float length = steps * system.stepDistance;
                 
                 if (drawIndicator)
                     DrawIndicator(segment._volume, segment._ray, length, intensityAtDestination);

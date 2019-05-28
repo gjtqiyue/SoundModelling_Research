@@ -23,7 +23,6 @@ public class CameraScript : MonoBehaviour
     {
         Vector3 direction = new Vector3(Mathf.Cos(AngleToRadian(angle.y)), Mathf.Sin(AngleToRadian(angle.x)) + 1f, Mathf.Sin(AngleToRadian(angle.y)));
         Vector3 dest = playerTransform.position + direction.normalized * distance;
-        Debug.Log(direction);
 
         if (Vector3.Distance(transform.position, dest) > followRange)
         {
