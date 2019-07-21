@@ -325,14 +325,6 @@ namespace SoundSystem
 
                     obj.transform.parent = mapParent;
 
-                    MeshRenderer renderer = obj.GetComponent<MeshRenderer>();
-
-                    var tempMaterial = new Material(renderer.sharedMaterial);
-
-                    tempMaterial.color = new Color(0, 0.5f, 0.5f);
-
-                    renderer.sharedMaterial = tempMaterial;
-
                     obj.transform.localScale = new Vector3(soundMapTileSize, soundMapTileSize, 1);
 
                     map[i, j] = obj;
