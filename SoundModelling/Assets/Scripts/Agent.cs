@@ -17,6 +17,7 @@ public class Agent : AgentWithSound
     public float waitTime;
     public bool canMakeSound;
     public SoundType typeToMake;
+    public float duration;
     public float volume;
 
     [SerializeField]
@@ -49,7 +50,7 @@ public class Agent : AgentWithSound
     private void Update()
     {
         if (canMakeSound)
-            soundComp.MakeSound(gameObject, transform.position, volume, typeToMake);
+            soundComp.MakeSound(gameObject, transform.position, volume, typeToMake, 60, duration);
 
         DoBehaviour();
     }

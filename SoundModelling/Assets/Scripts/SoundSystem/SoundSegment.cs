@@ -13,7 +13,7 @@ namespace SoundSystem
         public SoundType _type;
         public int _reflectNum;
 
-        public SoundSegment(int id, Vector3 ogn, Vector3 dir, float volume, SoundType type)
+        public SoundSegment(int id, Vector3 ogn, Vector3 dir, float volume, SoundType type, int reflectionIndex)
         {
             _id = id;
             _ray = new Ray
@@ -23,7 +23,7 @@ namespace SoundSystem
             };
             _volume = volume;
             _type = type;
-            _reflectNum = 0;
+            _reflectNum = reflectionIndex;
         }
 
         public SoundSegment(int id, Vector3 ogn, Vector3 dir, RaycastHit hit, float volume, SoundType type)
@@ -38,11 +38,6 @@ namespace SoundSystem
             _volume = volume;
             _type = type;
             _reflectNum = 0;
-        }
-
-        public void IncrementReflectionCount()
-        {
-            _reflectNum++;
         }
     }
 }

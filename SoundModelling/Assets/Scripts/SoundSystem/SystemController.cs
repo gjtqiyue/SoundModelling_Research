@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
 
 namespace SoundSystem
 {
@@ -14,8 +15,25 @@ namespace SoundSystem
         [Header("Sound Property")]
         public float stepDistance;          //distance for each time step
         public float fadingSpeed;           //how fast the sound fades away
+        public int rayFrequency;            //how many rays
         public int reflectionLimit;         //how many times it reflect a surface
         public float deflectionRate;        //how much the volume get deducted every time it reflects
+
+        public int RayFrequency          //control the ray number for all agents
+        {
+            set
+            {
+                if (value == rayFrequency) return;
+                else
+                {
+                    rayFrequency = value;
+                    foreach (GameObject a in agents)
+                    {
+                        a.GetComponent<AgentSoundComponent>().rayFrequency = value;
+                    }
+                }
+            }
+        }
 
         private GameObject[,] map;
 
@@ -29,28 +47,48 @@ namespace SoundSystem
         [HideInInspector]
         public float MapHeight;
         [HideInInspector]
-        public Vector2 resolution;  // x is width, y is length
+        public float scale;
+        [HideInInspector]
+        public float unitLength;
         [HideInInspector]
         public GameObject quadPrefab;
+
+        public float Scale
+        {
+            get { return scale; }
+            set
+            {
+                if (scale != value)
+                {
+                    scale = value;
+                    RegenerateSoundMap();
+                }
+            }
+        }
 
         [HideInInspector]
         public bool drawPointDistribution;
 
         [HideInInspector]
-        public float scaleX;
-        [HideInInspector]
-        public float scaleY;
+        public Vector2 resolution;
         [HideInInspector]
         public int count;
         [HideInInspector]
         public Transform mapParent;
 
+        private float soundMapTileSize;
+
         private Queue<AgentSoundComponent> ReceiveSoundQueue = new Queue<AgentSoundComponent>();
+
+        [SerializeField]
+        private bool generatingSoundMap;    //true if is regenerating sound map
+        [SerializeField]
+        private bool simulationON;
 
         [HideInInspector]
         public float currentHighestIntensity;
 
-        private List<int> modifiedMapGrids = new List<int>();
+        private Dictionary<int, int> modifiedMapGrids = new Dictionary<int, int>();
 
         public void RegisterAgent(GameObject agent)
         {
@@ -73,6 +111,7 @@ namespace SoundSystem
         protected override void Awake()
         {
             base.Awake();
+            simulationON = false;
             currentHighestIntensity = float.Epsilon;
             GenerateHeatMapLayout();
             //Debug.Log(Mathf.RoundToInt(1.34f) + " " + Mathf.RoundToInt(1.64f));
@@ -80,23 +119,34 @@ namespace SoundSystem
 
         private void Update()
         {
-            Initialize();
+            if (!generatingSoundMap && simulationON)
+            {
+                Initialize();
 
-            Calculate();
-            ResolveSoundCollision();
-            Paint();
-            ResolveSoundReceive();
+                Calculate();
+                ResolveSoundCollision();
+                Paint();
+                ResolveSoundReceive();
+            }
+        }
+
+        private void RegenerateSoundMap()
+        {
+            generatingSoundMap = true;
+            if (mapParent) { Destroy(mapParent.gameObject); }
+            modifiedMapGrids.Clear();
+            GenerateHeatMapLayout();
         }
 
         private void Initialize()
         {
             currentHighestIntensity = float.Epsilon;
 
-            if (modifiedMapGrids.Count > 0)
+            if (modifiedMapGrids.Count > 0 && map != null)
             {
-                for (int i=0; i<modifiedMapGrids.Count; i++)
+                foreach (int key in modifiedMapGrids.Keys)
                 {
-                    int num = modifiedMapGrids[i];
+                    int num = modifiedMapGrids[key];
                     int x = num / (int)resolution.y;
                     int y = num % (int)resolution.y;
                     map[x, y].GetComponent<PointIntensity>().Reset();
@@ -126,9 +176,9 @@ namespace SoundSystem
 
         private void ResolveSoundCollision()
         {
-            for (int i=0; i<modifiedMapGrids.Count; i++)
+            foreach (int key in modifiedMapGrids.Keys)
             {
-                int num = modifiedMapGrids[i];
+                int num = modifiedMapGrids[key];
                 int x = num / (int)resolution.y;
                 int y = num % (int)resolution.y;
                 map[x, y].GetComponent<PointIntensity>().MergeSoundFromDifferentSources();
@@ -154,9 +204,9 @@ namespace SoundSystem
 
         private void Paint()
         {
-            for (int i = 0; i < modifiedMapGrids.Count; i++)
+            foreach (int key in modifiedMapGrids.Keys)
             {
-                int num = modifiedMapGrids[i];
+                int num = modifiedMapGrids[key];
                 int x = num / (int)resolution.y;
                 int y = num % (int)resolution.y;
                 map[x, y].GetComponent<PointIntensity>().PaintMap();
@@ -177,8 +227,8 @@ namespace SoundSystem
             float x = pos.x - startPoint.x;
             float z = pos.z - startPoint.z;
 
-            int cellX = Mathf.RoundToInt(x / scaleX);
-            int cellY = Mathf.RoundToInt(z / scaleY);
+            int cellX = Mathf.RoundToInt(x / soundMapTileSize);
+            int cellY = Mathf.RoundToInt(z / soundMapTileSize);
 
             int curX = cellX;
             int curY = cellY;
@@ -229,8 +279,8 @@ namespace SoundSystem
             float x = pos.x - startPoint.x;
             float z = pos.z - startPoint.z;
 
-            int cellX = Mathf.RoundToInt(x / scaleX);
-            int cellY = Mathf.RoundToInt(z / scaleY);
+            int cellX = Mathf.RoundToInt(x / soundMapTileSize);
+            int cellY = Mathf.RoundToInt(z / soundMapTileSize);
  
             if (cellX < resolution.x && cellY < resolution.y && cellX >= 0 && cellY >= 0)
             {
@@ -238,7 +288,13 @@ namespace SoundSystem
                 map[cellX, cellY].GetComponent<PointIntensity>().AddNewSoundPoint(newIntensity, seg, source);
 
                 //add this point to modified list
-                modifiedMapGrids.Add(cellX * (int)resolution.y + cellY);
+                int key = cellX * (int)resolution.y + cellY;
+                int value;
+                if (!modifiedMapGrids.TryGetValue(key, out value))
+                {
+                    //test if the value is already exist in the dictionary, if not we add this value as both key and value
+                    modifiedMapGrids.Add(key, key);
+                }
 
                 //draw yellow line to indicate the mapping
                 if (drawPointDistribution) { Debug.DrawLine(pos, map[cellX, cellY].transform.position, Color.yellow); }
@@ -247,8 +303,11 @@ namespace SoundSystem
 
         public void GenerateHeatMapLayout()
         {
-            scaleX = width / resolution.x;
-            scaleY = length / resolution.y;
+            generatingSoundMap = true;
+            soundMapTileSize = scale * unitLength;
+
+            resolution.x = width / (soundMapTileSize);
+            resolution.y = length / (soundMapTileSize);
 
             map = new GameObject[(int)resolution.x, (int)resolution.y];
 
@@ -258,8 +317,8 @@ namespace SoundSystem
             {
                 for (int j = 0; j < resolution.y; j++)
                 {
-                    Vector3 location = startPoint + new Vector3(scaleX * i, MapHeight, scaleY * j);
-                    GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(quadPrefab);
+                    Vector3 location = startPoint + new Vector3(soundMapTileSize * i, MapHeight, soundMapTileSize * j);
+                    GameObject obj = (GameObject)Instantiate(quadPrefab);
 
                     obj.transform.position = location;
                     obj.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);
@@ -274,13 +333,42 @@ namespace SoundSystem
 
                     renderer.sharedMaterial = tempMaterial;
 
-                    obj.transform.localScale = new Vector3(scaleX, scaleY, 1);
+                    obj.transform.localScale = new Vector3(soundMapTileSize, soundMapTileSize, 1);
 
                     map[i, j] = obj;
                 }
             }
+
+            generatingSoundMap = false;
+        }
+
+        public bool IsSimulationOn()
+        {
+            return simulationON;
+        }
+
+        void OnGUI()
+        {
+            GUILayout.Label("Control");
+            if (GUILayout.Button("Start / Stop Sim"))
+            {
+                simulationON = !simulationON;
+            }
+
+            GUILayout.Label("System Property");
+            GUILayout.Label("Reflection");
+            reflectionLimit = int.Parse(GUILayout.TextField(reflectionLimit.ToString()));
+            reflectionLimit = (int)GUILayout.HorizontalSlider(reflectionLimit, 0f, 10f);
+            GUILayout.Label("Ray");
+            RayFrequency = int.Parse(GUILayout.TextField(rayFrequency.ToString()));
+            GUILayout.Label("Scale");
+            Scale = float.Parse(GUILayout.TextField(Scale.ToString()));
+            Scale = GUILayout.HorizontalSlider(Scale, 0.1f, 10f);
+            GUILayout.Label("Fading");
+            fadingSpeed = float.Parse(GUILayout.TextField(fadingSpeed.ToString()));
+            fadingSpeed = GUILayout.HorizontalSlider(fadingSpeed, 0.1f, 5f);
+            GUILayout.Label("Step distance");
+            stepDistance = float.Parse(GUILayout.TextField(stepDistance.ToString()));
         }
     }
-
-
 }

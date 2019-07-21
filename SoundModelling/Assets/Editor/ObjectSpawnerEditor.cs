@@ -176,6 +176,11 @@ public class ObjectSpawnerEditor : Editor
             objectNum = EditorGUILayout.IntField("Object count", objectNum);
             GUILayout.EndHorizontal();
 
+            if (GUILayout.Button("Add object"))
+            {
+                spawner.objects.Add(null);
+            }
+
             if (spawner.objects.Count > 0)
             {
                 objectNum = spawner.objects.Count;
@@ -211,6 +216,7 @@ public class ObjectSpawnerEditor : Editor
                 if (deleteObjectIndex > 0)
                 {
                     spawner.objects.RemoveAt(deleteObjectIndex);
+                    objectNum--;
                 }
             }
         }

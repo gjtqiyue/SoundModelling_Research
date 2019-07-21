@@ -27,7 +27,8 @@ public class SoundSystemControllerEditor : Editor
             systemController.width = EditorGUILayout.IntField("Width", systemController.width);
             systemController.length = EditorGUILayout.IntField("Length", systemController.length);
 
-            systemController.resolution = EditorGUILayout.Vector2Field("Resolution", systemController.resolution);
+            systemController.scale = EditorGUILayout.FloatField("Scale", systemController.scale);
+            systemController.unitLength = EditorGUILayout.FloatField("UnitSize", systemController.unitLength);
 
             systemController.quadPrefab = (GameObject)EditorGUILayout.ObjectField("Unit Prefab", systemController.quadPrefab, typeof(GameObject), false);
         }
@@ -44,4 +45,6 @@ public class SoundSystemControllerEditor : Editor
     {
         systemController = target as SystemController;
     }
+
+
 }

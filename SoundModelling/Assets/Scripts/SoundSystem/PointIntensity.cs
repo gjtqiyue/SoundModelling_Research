@@ -13,6 +13,8 @@ namespace SoundSystem
         private MeshRenderer meshRenderer;
 
         private Dictionary<SoundType, List<SoundMapPointData>> sources = new Dictionary<SoundType, List<SoundMapPointData>>();
+        [SerializeField]
+        private List<float> segIds = new List<float>();
 
         private void Awake()
         {
@@ -30,6 +32,7 @@ namespace SoundSystem
         {
             net_intensity = 0;
             sources.Clear();
+            segIds.Clear();
             PaintMap();
         }
 
@@ -71,12 +74,14 @@ namespace SoundSystem
             foreach (SoundType t in sources.Keys)
             {
                 float intensity = 0;
+                
                 for (int i=0; i<sources[t].Count; i++)
                 {
+                    segIds.Add(sources[t][i].Intensity());
                     intensity += sources[t][i].Intensity();
                 }
                 //Debug.Log("type: " + t + " has intensity of " + intensity);
-
+                
                 //take the loudest sound type and update its intensity
                 if (intensity > net_intensity)
                 {
@@ -94,7 +99,7 @@ namespace SoundSystem
         public void PaintMap()
         {
             float value = Mathf.Clamp((net_intensity) / SystemController.Instance.currentHighestIntensity, 0f, 1f);
-            meshRenderer.sharedMaterial.color = new Color(value, Mathf.Clamp(1-value, 0, 0.5f), Mathf.Clamp(1 - value, 0, 0.5f), 1);
+            meshRenderer.sharedMaterial.color = new Color(value, 0.3f, 0.3f, 1);
         }
     }
 }

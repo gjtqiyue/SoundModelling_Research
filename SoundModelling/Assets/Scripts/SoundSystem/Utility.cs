@@ -13,10 +13,5 @@ namespace SoundSystem
             nextAvailId++;
             return nextAvailId;
         }
-
-        public static float AngleToRadian(float angle)
-        {
-            return angle / 360 * 2 * Mathf.PI;
-        }
     }
 }
