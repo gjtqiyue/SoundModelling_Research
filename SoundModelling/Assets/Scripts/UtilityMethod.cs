@@ -33,4 +33,19 @@ public static class UtilityMethod
     {
         return angle / 360 * 2 * Mathf.PI;
     }
+
+    public static float RadianToAngle(float radian)
+    {
+        return radian / 2 / Mathf.PI * 360;
+    }
+
+    public static Vector3 VectorProjection(Vector3 from, Vector3 onto)
+    {
+        return Vector3.Dot(from, onto) / onto.sqrMagnitude * onto;
+    }
+
+    public static float VectorProjectionLength(Vector3 from, Vector3 onto)
+    {
+        return Vector3.Dot(from, onto) / onto.magnitude;
+    }
 }

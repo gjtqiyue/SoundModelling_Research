@@ -6,6 +6,8 @@ namespace SoundSystem
 {
     public abstract class AgentWithSound : MonoBehaviour
     {
+        public float radius;
+
         public abstract void SearchSoundSource(List<PointIntensity> path);
     }
 }

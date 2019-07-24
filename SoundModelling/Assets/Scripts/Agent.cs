@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 using SoundSystem;
 
 public class Agent : AgentWithSound
@@ -15,11 +16,15 @@ public class Agent : AgentWithSound
     public float patrolSpeed;
     public float searchSpeed;
     public float waitTime;
+    [Space]
     public bool canMakeSound;
     public SoundType typeToMake;
     public float duration;
     public float volume;
+    [Space]
+    public float threshold;
 
+    [Space]
     [SerializeField]
     private List<Transform> patrolPoints = new List<Transform>();
 
@@ -86,9 +91,11 @@ public class Agent : AgentWithSound
                 }
 
                 // if we are not at the path destination, we move to there
-                if (Vector3.SqrMagnitude(searchPath[0].pos - transform.position) > 0.5)
+                if (Vector3.SqrMagnitude(searchPath[0].pos - transform.position) > 0.5f)
                 {
-                    transform.position = Vector3.MoveTowards(transform.position, searchPath[0].pos, searchSpeed);
+                    Vector3 dest = new Vector3(searchPath[0].pos.x, 0, searchPath[0].pos.z);
+                    transform.position = Vector3.MoveTowards(transform.position, dest, searchSpeed);
+                    Debug.Log(dest);
                 }
                 else
                 {

@@ -13,13 +13,16 @@ namespace SoundSystem
 
         [Space]
         [Header("Sound Property")]
-        public float stepDistance;          //distance for each time step
-        public float fadingSpeed;           //how fast the sound fades away
-        public int rayFrequency;            //how many rays
-        public int reflectionLimit;         //how many times it reflect a surface
-        public float deflectionRate;        //how much the volume get deducted every time it reflects
+        public float stepDistance;                              //distance for each time step
+        public float fadingSpeed;                               //how fast the sound fades away
+        public int rayFrequency;                                //how many rays
+        public int reflectionLimit;                             //how many times it reflect a surface
+        [Range(0.5f, 1f)] public float diffractionAngleRatio;   //determine the angle of the diffraction of the sound
+        public float diffractionRate;
+        public float deflectionRate;                            //how much the volume get deducted every time it reflects
+        public LayerMask layerOfSoundObstacle;
 
-        public int RayFrequency          //control the ray number for all agents
+        public int RayFrequency                                 //control the ray number for all agents
         {
             set
             {
@@ -83,7 +86,7 @@ namespace SoundSystem
         [SerializeField]
         private bool generatingSoundMap;    //true if is regenerating sound map
         [SerializeField]
-        private bool simulationON;
+        private bool simulationON = false;
 
         [HideInInspector]
         public float currentHighestIntensity;
@@ -111,7 +114,6 @@ namespace SoundSystem
         protected override void Awake()
         {
             base.Awake();
-            simulationON = false;
             currentHighestIntensity = float.Epsilon;
             GenerateHeatMapLayout();
             //Debug.Log(Mathf.RoundToInt(1.34f) + " " + Mathf.RoundToInt(1.64f));
@@ -197,7 +199,7 @@ namespace SoundSystem
             while (ReceiveSoundQueue.Count > 0)
             {
                 AgentSoundComponent a = ReceiveSoundQueue.Dequeue();
-                List<PointIntensity> trace = TrackSoundSource(a.transform.position);
+                List<PointIntensity> trace = TrackSoundSource(a.transform.position, a.agent.radius);
                 a.DrawTrackToSoundSource(trace);
             }
         }
@@ -220,7 +222,7 @@ namespace SoundSystem
             //}
         }
 
-        private List<PointIntensity> TrackSoundSource(Vector3 pos)
+        private List<PointIntensity> TrackSoundSource(Vector3 pos, float agentRadius)
         {
             List<PointIntensity> trace = new List<PointIntensity>();
 
@@ -242,12 +244,18 @@ namespace SoundSystem
                 float maxIntensity = pointIntensity.net_intensity;
                 int maxX = curX;
                 int maxY = curY;
+
+                Vector3 curPos = map[curX, curY].GetComponent<PointIntensity>().pos;
+
                 for (int i = -1; i <= 1; i++)
                 {
                     for (int j = -1; j <= 1; j++)
                     {
+                        Vector3 destPos = map[curX + i, curY + j].GetComponent<PointIntensity>().pos;
+
                         if (i == 0 && j == 0) { continue; }
                         else if (curX + i > resolution.x || curX + i < 0 || curY + j > resolution.y || curY + j < 0) { continue; }
+                        else if (Physics.Raycast(curPos, destPos-curPos, (destPos-curPos).magnitude + agentRadius, layerOfSoundObstacle, QueryTriggerInteraction.Ignore)) { continue; } //if hit a wall or obstacle
                         else
                         {
                             if (map[curX + i, curY + j].GetComponent<PointIntensity>().net_intensity > maxIntensity)

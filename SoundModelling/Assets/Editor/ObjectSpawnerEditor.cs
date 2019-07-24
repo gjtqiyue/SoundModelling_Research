@@ -158,7 +158,7 @@ public class ObjectSpawnerEditor : Editor
         float gridY = (Mathf.RoundToInt(mousePos.y / height)) * height;
         float gridZ = (Mathf.RoundToInt(mousePos.z / length)) * length;
 
-        trans.position = new Vector3(gridX, gridY, gridZ);
+        trans.position = new Vector3(gridX, gridY + drawPlaneHeight, gridZ);
 
         return trans.position;
     }

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 758513068337467039}
   - component: {fileID: 6468480104292462368}
   - component: {fileID: 1841477686578774123}
-  - component: {fileID: 8551560515585633953}
+  - component: {fileID: 5540924885088685991}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -29,7 +29,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6126160789776110052}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 5, y: 5, z: 5}
   m_Children: []
@@ -52,6 +52,7 @@ MonoBehaviour:
   pace: 1
   movingVolume: 20
   movingStepDuration: 0.1
+  soundAngle: 60
   isWalking: 0
   timer: 0
 --- !u!114 &5142744606094822598
@@ -69,11 +70,14 @@ MonoBehaviour:
   indicator: {fileID: 4893596927471267063, guid: cbff41f76761faf4fa179849801319a9,
     type: 3}
   heatMap: {fileID: 0}
-  agent: {fileID: 0}
+  agent: {fileID: 8419137010628427842}
+  raycastLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
   rayFrequency: 72
   reflectionLimit: 0
   drawIndicator: 0
-  drawDebugLine: 1
+  drawDebugLine: 0
 --- !u!33 &758513068337467039
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -132,7 +136,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &8551560515585633953
+--- !u!54 &5540924885088685991
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -31,13 +31,13 @@ public class Player : AgentWithSound
     // Update is called once per frame
     void Update()
     {
-        soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk, soundAngle, movingStepDuration);
+        //soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk, soundAngle, movingStepDuration);
         if (isWalking)
         {
             if (timer <= 0.05)
             {
                 //make a move sound
-                
+                soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk, soundAngle, movingStepDuration);
                 timer = pace;
             }
 
