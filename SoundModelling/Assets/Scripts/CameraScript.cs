@@ -18,6 +18,7 @@ public class CameraScript : MonoBehaviour
     {
         Vector3 direction = new Vector3(Mathf.Cos(AngleToRadian(angle.y)), Mathf.Sin(AngleToRadian(angle.x)) + 1f, Mathf.Sin(AngleToRadian(angle.y)));
         transform.rotation = Quaternion.LookRotation(-direction.normalized);
+        transform.position = playerTransform.position + direction.normalized * distance;
     }
 
     private void Update()
@@ -36,19 +37,38 @@ public class CameraScript : MonoBehaviour
         //    following = true;
         //}
 
-        //if (following)
-        //{
+        if (dest != transform.position)
+        {
             transform.position = Vector3.MoveTowards(transform.position , dest, followSpeed * Time.fixedDeltaTime);
 
-            if (Vector3.SqrMagnitude(dest - transform.position) < 0.5)
+            //if (Vector3.SqrMagnitude(dest - transform.position) < 0.5)
+            //{
+            //    following = false;
+            //}
+        }
+    }
+
+    private void OnEnable()
+    {
+        GameObject target;
+        if (GameManager.Instance)
+        {
+            target = GameManager.Instance.GetCurrentControlledObject();
+            if (target)
             {
-                following = false;
+                playerTransform = target.transform;
             }
-        //}
+        }
+
+        Vector3 direction = new Vector3(Mathf.Cos(AngleToRadian(angle.y)), Mathf.Sin(AngleToRadian(angle.x)) + 1f, Mathf.Sin(AngleToRadian(angle.y)));
+        transform.rotation = Quaternion.LookRotation(-direction.normalized);
+        transform.position = playerTransform.position + direction.normalized * distance;
     }
 
     public float AngleToRadian(float angle)
     {
         return angle / 360 * 2 * Mathf.PI;
     }
+
+    
 }

@@ -7,28 +7,24 @@ namespace SoundSystem
 {
     public class AgentSoundComponent : MonoBehaviour
     {
-        public GameObject indicator;
-        public Heatmap heatMap;
         public AgentWithSound agent;
         public LayerMask raycastLayer;
 
         [Header("SoundAttribute")]
         public int rayFrequency;        //how many rays
-        public int reflectionLimit;    //reflection limit
 
         [Space]
-        public bool drawIndicator = false;
         public bool drawDebugLine = false;
 
         [SerializeField]
-        private List<MapPointData> mapKeyPoints;  //point that is important
+        private List<MapPointData> mapKeyPoints;    //point that is important
+        private List<int> diffractedSegments;       //segments that is already diffracted
         private Queue<Sound> soundQueue;
         private Queue<SoundSegment> soundSegmentQueue;
+        private Queue<SoundSegment> soundSegmentQueue_nextFrame;
 
         private Ray r;
         private int segmentId;
-
-        private ArrayList blocks;
 
         SystemController system;
         Collider _collider;
@@ -37,27 +33,36 @@ namespace SoundSystem
         {
             soundQueue = new Queue<Sound>();
             soundSegmentQueue = new Queue<SoundSegment>();
-            blocks = new ArrayList();
+            diffractedSegments = new List<int>();
             system = SystemController.Instance;
             _collider = GetComponent<Collider>();
             agent = gameObject.GetComponent<AgentWithSound>();
-            SystemController.Instance.RegisterAgent(gameObject);
+            SystemController.Instance.RegisterAgent(this);
         }
 
         // called when produce a sound
         public void MakeSound(GameObject agent, Vector3 pos, float volume, SoundType type, float range, float duration)
         {
             if (system.IsSimulationOn())
+            {
+                ////iterate through the list to ensure the constraint that we don't want two same sound type in the list at the same type
+                //foreach (var sound in soundQueue)
+                //{
+                //    if (sound.type == type)
+                //        return;
+                //}
+
                 soundQueue.Enqueue(new Sound(agent, pos, volume, type, range, duration));
+            }
         }
 
         // called when a sound can reach this object
-        public void ReceiveSound(GameObject from, float intensity)
+        public void ReceiveSound(SoundType t)
         {
             //Debug.Log("Receive sound from " + from.name + " At intensity " + intensity);
             //hill climb to find where the sound come from
             //Question: how often should we do it?
-            system.RequestForSoundResolve(this);
+            system.RequestForSoundResolve(this, t);
         }
 
         public void DrawTrackToSoundSource(List<PointIntensity> track)
@@ -77,37 +82,37 @@ namespace SoundSystem
                 }
             }
 
-            if (agent)
+            if (agent.canTrackSound)
                 agent.SearchSoundSource(track);
         }
 
         public void Calculate()
         {
-            if (soundQueue.Count <= 0) return;
+            if (soundQueue.Count <= 0 && soundSegmentQueue.Count <= 0) return;
+            if (segmentId > 10000) { segmentId = 0; }   //reset segment id
 
-            segmentId = 0;
+            //segmentId = 0;
+            diffractedSegments.Clear();
+
             mapKeyPoints = new List<MapPointData>();
 
-            while (soundQueue.Count > 0)
+            soundSegmentQueue_nextFrame = new Queue<SoundSegment>();
+
+            int numOfSoundForOneRound = soundQueue.Count;
+            for (int q = 0; q < numOfSoundForOneRound; q++)
             {
                 Sound sound = soundQueue.Dequeue();
-                if (true)
+
+                if (!sound.IsOver())
                 {
+                    soundQueue.Enqueue(sound);
+
                     float volume = sound.volume; // rayFrequency;
 
                     float steps = sound.volume / (system.fadingSpeed + float.Epsilon);
                     float spreadDistance = steps * system.stepDistance;
 
                     //mapKeyPoints.Add(new MapPointData(sound.sid, sound.producedPos, sound.volume, fadingSpeed, stepDistance));
-
-                    //if (blocks.Count > 0)
-                    //{
-                    //    foreach (GameObject obj in blocks)
-                    //    {
-                    //        Destroy(obj);
-                    //    }
-                    //    blocks.Clear();
-                    //}
 
                     Transform target = sound.producer.transform;
                     Vector3 origin = target.position;
@@ -117,8 +122,8 @@ namespace SoundSystem
                     float halfRange = sound.range / 2;
                     Vector3 bound_CCW = UtilityMethod.RotateAroundY(halfRange, forward);
                     Vector3 bound_CW = UtilityMethod.RotateAroundY(-halfRange, forward);
-                    Debug.DrawRay(agent.transform.position, bound_CCW * 10, Color.cyan);
-                    Debug.DrawRay(agent.transform.position, bound_CW * 10, Color.green);
+                    //Debug.DrawRay(agent.transform.position, bound_CCW * 10, Color.cyan);
+                    //Debug.DrawRay(agent.transform.position, bound_CW * 10, Color.green);
 
                     float delta = 360f / rayFrequency;
                     int rayNum = (int)(sound.range / delta);
@@ -129,17 +134,18 @@ namespace SoundSystem
                         soundSegmentQueue.Enqueue(new SoundSegment(segmentId, origin, dir, sound.volume, sound.type, 0));
                         dir = UtilityMethod.RotateAroundY(delta, dir);
                     }
-
-                    while (soundSegmentQueue.Count > 0)
-                    {
-                        SoundSegment segment = soundSegmentQueue.Dequeue();
-                        RayCastFromPoint(segment, sound);
-                    }
                 }
             }
+            while (soundSegmentQueue.Count > 0)
+            {
+                SoundSegment segment = soundSegmentQueue.Dequeue();
+
+                RayCastFromPoint(segment);
+            }
+            soundSegmentQueue = soundSegmentQueue_nextFrame;
         }
 
-        private void RayCastFromPoint(SoundSegment segment, Sound sound)
+        private void RayCastFromPoint(SoundSegment segment)
         {
             float remainVol = segment._volume;
             if (remainVol < 0.1f || segment._reflectNum > system.reflectionLimit)
@@ -164,34 +170,43 @@ namespace SoundSystem
             if (hit.transform == null)
             {
                 //nothing
-                if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * spreadDist, Color.red); }
+                if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * spreadDist, Color.red, 0.1f); }
 
-                UpdateMapPoint(segment, sound, steps, true);
+                UpdateMapPoint(segment, steps, true);
             }
             else if (hit.transform.gameObject.GetComponent<AgentSoundComponent>())
             {
-                if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * spreadDist, Color.red); }
+                if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * spreadDist, Color.red, 0.1f); }
 
                 //calculate the remained volume
                 float distance = hit.distance;
                 float nextSteps = distance / system.stepDistance;              //the new number of steps based on the current hit point of the ray
                 float remain = (remainVol - nextSteps * system.fadingSpeed);   //remained volume at the hit point
 
-                UpdateMapPoint(segment, sound, nextSteps, false);
+                UpdateMapPoint(segment, nextSteps, false);
 
                 //if the hit target is an Agent we notify them
-                CheckHitTarget(hit.transform.gameObject, remainVol);
+                CheckHitTarget(hit.transform.gameObject, segment._type, gameObject);
             }
             else if (hit.transform.tag == "DiffractionPoint")
             {
-                if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * spreadDist, Color.red); }
+                if (drawDebugLine) { Debug.DrawLine(ray.origin, hit.point, Color.red, 0.1f); }
+                // if this segment is already diffracted then we don't need to do it again
+                //if (diffractedSegments.Contains(segment._id))
+                //{
+                //    return;
+                //}
+                //else
+                //{
+                //    diffractedSegments.Add(segment._id);
+                //}
 
                 //calculate the remained volume
                 float distance = hit.distance;
                 float nextSteps = distance / system.stepDistance;                                                           //the new number of steps based on the current hit point of the ray
                 float remain = (remainVol - nextSteps * system.fadingSpeed) * SystemController.Instance.diffractionRate;    //remained volume at the hit point
 
-                UpdateMapPoint(segment, sound, nextSteps, false);
+                UpdateMapPoint(segment, nextSteps, false);
 
                 //handle diffraction
                 Vector3 edge = Vector3.zero;
@@ -206,7 +221,8 @@ namespace SoundSystem
                 if (dotProduct_1 > 0 && dotProduct_2 > 0)
                 {
                     //hit into the wall, just reflection or do nothing
-                    ReflectSoundRay(segment, sound, remainVol, ray, direction, hit);
+                    //ReflectSoundRay(segment, sound, remainVol, ray, direction, hit);
+                    Debug.DrawRay(hit.transform.position, edge * 10);
                 }
                 else if (dotProduct_1 < 0 && dotProduct_2 < 0)
                 {
@@ -216,13 +232,13 @@ namespace SoundSystem
                 {
                     edge = diffracPoint.edgeVector_1;
                     angle = Vector3.SignedAngle(edge, ray.direction, Vector3.up);
-                    Debug.DrawRay(hit.transform.position, edge * 10);
+                    if (drawDebugLine) { Debug.DrawRay(hit.transform.position, edge * 10, Color.green, 0.1f); }
                 }
                 else if (dotProduct_2 > dotProduct_1)
                 {
                     edge = diffracPoint.edgeVector_2;
                     angle = Vector3.SignedAngle(edge, ray.direction, Vector3.up);
-                    Debug.DrawRay(hit.transform.position, edge * 10);
+                    if (drawDebugLine) { Debug.DrawRay(hit.transform.position, edge * 10, Color.green, 0.1f); }
                 }
                 else
                 {
@@ -237,7 +253,8 @@ namespace SoundSystem
             }
             else
             {
-                ReflectSoundRay(segment, sound, remainVol, ray, direction, hit);
+                //if (segment._reflectNum >= 1) { Debug.Log("yeah"); }
+                ReflectSoundRay(segment, remainVol, ray, direction, hit);
             }
         }
 
@@ -257,7 +274,7 @@ namespace SoundSystem
             }
         }
 
-        private void ReflectSoundRay(SoundSegment segment, Sound sound, float remainVol, Ray ray, Vector3 direction, RaycastHit hit)
+        private void ReflectSoundRay(SoundSegment segment, float remainVol, Ray ray, Vector3 direction, RaycastHit hit)
         {
             Vector3 reflectVec = Vector3.Reflect(ray.direction, hit.normal);
 
@@ -265,20 +282,24 @@ namespace SoundSystem
             float distance = hit.distance;
             float nextSteps = distance / system.stepDistance;
 
-            float remain = (remainVol - nextSteps * system.fadingSpeed) * system.deflectionRate;
+            float remain = (remainVol - nextSteps * system.fadingSpeed) * system.absorbtionRate;
 
             //Debug.Log("ray " + ray.origin + " " + hit.point);
-            if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * hit.distance, Color.blue); }
+            if (drawDebugLine) { Debug.DrawRay(ray.origin, direction * hit.distance, Color.blue, 0.1f); }
 
-            UpdateMapPoint(segment, sound, nextSteps, false);
+            UpdateMapPoint(segment, nextSteps, false);
 
             //keep reflecting, treat it as a new sound
-            soundSegmentQueue.Enqueue(new SoundSegment(segment._id + 1, hit.point, reflectVec, remain, segment._type, segment._reflectNum + 1));
+            //soundSegmentQueue.Enqueue(new SoundSegment(segment._id + 1, hit.point, reflectVec, remain, segment._type, segment._reflectNum + 1));
+            soundSegmentQueue_nextFrame.Enqueue(new SoundSegment(segment._id + 1, hit.point, reflectVec, remain, segment._type, segment._reflectNum + 1));
+           
         }
 
         //Calculate the line from start to destination and divide into several intensity points based on fading speed and travelling speed
-        private void UpdateMapPoint(SoundSegment segment, Sound sound, float steps, bool includeDestination)
+        private void UpdateMapPoint(SoundSegment segment, float steps, bool includeDestination)
         {
+            List<Vector3> positions = new List<Vector3>();
+            List<float> intensities = new List<float>();
             for (int k = 0; k < steps; k++)
             {
                 // operation for each in between sound points
@@ -286,42 +307,40 @@ namespace SoundSystem
                 float intensity = (segment._volume - system.fadingSpeed * k);
                 Vector3 position = segment._ray.origin + segment._ray.direction * length;
 
-                if (drawIndicator)
-                    DrawIndicator(segment._volume, segment._ray, length, intensity);
-
-                //map it to the map in the system controller
-                system.MapSoundData(position, intensity, segment, sound.producer);
+                positions.Add(position);
+                intensities.Add(intensity);
             }
 
+            //map it to the grid based map in the system controller
+            system.MapSoundData(positions, intensities, segment, gameObject);
+
+            // this is for dynamically adjust the length ray indicator, visual representation use only
             float intensityAtDestination = (segment._volume - system.fadingSpeed * steps) + 0.1f;
             if (includeDestination)
             {
                 float length = steps * system.stepDistance;
-                
-                if (drawIndicator)
-                    DrawIndicator(segment._volume, segment._ray, length, intensityAtDestination);
             }
         }
 
-        private Ray DrawIndicator(float volume, Ray ray, float length, float intensity)
+        private void CheckHitTarget(GameObject obj, SoundType t, GameObject source)
         {
-            GameObject obj = Instantiate(indicator, ray.origin + ray.direction * length, Quaternion.identity);
-            obj.GetComponent<SoundPoint>().source = ray.origin;
-            obj.GetComponent<SoundPoint>().intensity = intensity;
-            float f = intensity / volume;
-            obj.GetComponent<MeshRenderer>().material.color = new Color(f, 1 - f, 1 - f, 1);
-            blocks.Add(obj);
+            // prevent the case when a agent receive its own sound
+            if (obj == source) return;
 
-            return ray;
-        }
-
-        private void CheckHitTarget(GameObject obj, float intensity)
-        {
+            //pass in sound type heard
             AgentSoundComponent cpnt = obj.GetComponent<AgentSoundComponent>();
             if (cpnt)
             {
-                cpnt.ReceiveSound(gameObject, intensity);
+                //cpnt.ReceiveSound(gameObject, intensity);
+                cpnt.ReceiveSound(t);
             }
         }
+
+        public bool IsMakingSound()
+        {
+            return (soundQueue.Count > 0);
+        }
+
+       
     }
 }

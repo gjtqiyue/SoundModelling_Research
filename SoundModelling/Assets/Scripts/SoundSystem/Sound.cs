@@ -12,8 +12,8 @@ namespace SoundSystem
         public float volume;
         public SoundType type;
         public float range;             //angle represents the openning angle of this sound
-        public float duration;
 
+        private float duration;
         private float timeStart;
 
         public Sound (GameObject pro, Vector3 pos, float vol, SoundType t, float r, float dur)
@@ -30,7 +30,7 @@ namespace SoundSystem
 
         public bool IsOver()
         {
-            return Time.time >= timeStart + duration * 1000;
+            return Time.time >= timeStart + duration;
         }
     }
 
@@ -38,6 +38,7 @@ namespace SoundSystem
     {
         Walk,
         Run,
-        Hit
+        Hit,
+        Talk
     }
 }

@@ -14,7 +14,8 @@ namespace SoundSystem
 
         private Dictionary<SoundType, List<SoundMapPointData>> sources = new Dictionary<SoundType, List<SoundMapPointData>>();
         [SerializeField]
-        private List<float> segIds = new List<float>();
+        private List<string> segIds = new List<string>();
+        private Dictionary<SoundType, float> accumulatedIntensity = new Dictionary<SoundType, float>();
 
         private void Awake()
         {
@@ -33,18 +34,22 @@ namespace SoundSystem
             net_intensity = 0;
             sources.Clear();
             segIds.Clear();
+            accumulatedIntensity.Clear();
             PaintMap();
         }
 
-        public void AddNewSoundPoint(float intensity, SoundSegment seg, GameObject source)
+        public void AddNewSoundPoint(float intensity, SoundSegment seg, string sourceName)
         {
+            //filter the sound by type
             //if under the source's name there is no entry, we create one
             //else we add the intensity to the new list
+
+            //unifypointdata averages the intensity from the same source and segment
             if (!sources.ContainsKey(seg._type))
             {
                 sources.Add(seg._type, new List<SoundMapPointData>());
 
-                SoundMapPointData data = new SoundMapPointData(seg._type, seg._id, source.name);
+                SoundMapPointData data = new SoundMapPointData(seg._type, seg._id, sourceName);
                 data.UnifyPointData(intensity);
                 sources[seg._type].Add(data);
             }
@@ -53,7 +58,7 @@ namespace SoundSystem
                 //try to find the entry that has the same segment id
                 for (int i=0; i<sources[seg._type].Count; i++)
                 {
-                    if (sources[seg._type][i].segmentId == seg._id && sources[seg._type][i].sourceName == source.name)
+                    if (sources[seg._type][i].segmentId == seg._id && sources[seg._type][i].sourceName == sourceName)
                     {
                         sources[seg._type][i].UnifyPointData(intensity);
                         return;
@@ -61,7 +66,7 @@ namespace SoundSystem
                 }
 
                 //no match for this id
-                SoundMapPointData data = new SoundMapPointData(seg._type, seg._id, source.name);
+                SoundMapPointData data = new SoundMapPointData(seg._type, seg._id, sourceName);
                 data.UnifyPointData(intensity);
                 sources[seg._type].Add(data);
             }
@@ -77,10 +82,12 @@ namespace SoundSystem
                 
                 for (int i=0; i<sources[t].Count; i++)
                 {
-                    segIds.Add(sources[t][i].Intensity());
+                    segIds.Add(sources[t][i].sourceName + sources[t][i].segmentId + sources[t][i].Intensity());
                     intensity += sources[t][i].Intensity();
                 }
+
                 //Debug.Log("type: " + t + " has intensity of " + intensity);
+                accumulatedIntensity[t] = intensity;
                 
                 //take the loudest sound type and update its intensity
                 if (intensity > net_intensity)
@@ -98,8 +105,27 @@ namespace SoundSystem
 
         public void PaintMap()
         {
-            float value = Mathf.Clamp((net_intensity) / SystemController.Instance.currentHighestIntensity, 0f, 1f);
-            meshRenderer.material.SetVector("_Color", new Vector4(value, 0, 0, value));
+            float highest = SystemController.Instance.currentHighestIntensity;
+            float value = Mathf.Clamp((net_intensity) / highest, 0f, 1f);
+            //if add if statement, agent will leave a trace of sound intensity, interesting
+            if (value > 0)
+            {
+                meshRenderer.material.SetInt("_AnimationSwitch", SystemController.Instance.animationSwitch);
+                meshRenderer.material.SetVector("_Color", new Vector4(value, 0.2f, 1-value, 0.9f));
+                meshRenderer.material.SetFloat("_Intensity", Mathf.Clamp(highest - net_intensity, 0, highest));
+            }
+            else
+            {
+                meshRenderer.material.SetVector("_Color", new Vector4(1f, 1f, 1f, 0f));
+            }
+        }
+
+        public float RetrieveSoundIntensityAtType(SoundType s)
+        {
+            if (accumulatedIntensity != null && accumulatedIntensity.ContainsKey(s))
+                return accumulatedIntensity[s];
+            else
+                return 0;
         }
     }
 }

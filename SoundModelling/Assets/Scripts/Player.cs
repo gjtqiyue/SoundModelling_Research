@@ -7,8 +7,6 @@ using SoundSystem;
 public class Player : AgentWithSound
 {
 
-    public float speed;
-
     [Header("Moving sound settings")]
     public float pace;  //how long it takes to make one step
     public int movingVolume;
@@ -26,37 +24,42 @@ public class Player : AgentWithSound
     void Start()
     {
         soundCmpt = GetComponent<AgentSoundComponent>();
+        if (gameObject.tag == "Player")
+        {
+            AcquireControl();
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+
         //soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk, soundAngle, movingStepDuration);
         if (isWalking)
         {
             if (timer <= 0.05)
             {
                 //make a move sound
-                soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk, soundAngle, movingStepDuration);
+                //soundCmpt.MakeSound(gameObject, transform.position, movingVolume, SoundType.Walk, soundAngle, movingStepDuration);
                 timer = pace;
             }
 
             timer -= Time.deltaTime;
         }
-        
+
     }
 
-    private void FixedUpdate()
+    protected override void FixedUpdate()
     {
+        base.FixedUpdate();
+
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
-
-        transform.position = transform.position + new Vector3(h * speed * Time.fixedDeltaTime, 0, v * speed * Time.fixedDeltaTime);
 
         if (h == 0 && v == 0)
         {
             isWalking = false;
-            timer = pace / 2;
+            //timer = 0.051f;
         }
         else
         {
@@ -69,9 +72,19 @@ public class Player : AgentWithSound
         throw new System.NotImplementedException();
     }
 
+    private int volume;
+    private float duration;
+
     private void OnGUI()
     {
-        GUI.Label(new Rect (200, 10, 200, 50), "Volume");
-        movingVolume = int.Parse(GUI.TextField(new Rect(200, 30, 100, 20), movingVolume.ToString()));
+        GUI.Label(new Rect(200, 10, 200, 50), "Volume");
+        volume = int.Parse(GUI.TextField(new Rect(200, 40, 100, 20), volume.ToString()));
+        GUI.Label(new Rect(200, 70, 200, 50), "Duration");
+        duration = float.Parse(GUI.TextField(new Rect(200, 100, 100, 20), duration.ToString()));
+
+        if (GUI.Button(new Rect(200, 140, 200, 50), "Make Sound"))
+        {
+            soundCmpt.MakeSound(gameObject, transform.position, volume, SoundType.Walk, 360, duration);
+        }
     }
 }

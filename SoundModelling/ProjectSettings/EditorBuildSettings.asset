@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Corner3.unity
     guid: f5827dd7daebc2543b82549348ef9237
+  - enabled: 1
+    path: Assets/Scenes/MainTest.unity
+    guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects: {}

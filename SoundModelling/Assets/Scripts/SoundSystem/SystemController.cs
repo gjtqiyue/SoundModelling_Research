@@ -9,7 +9,7 @@ namespace SoundSystem
     public class SystemController : SingletonBase<SystemController>
     {
         [SerializeField]
-        List<GameObject> agents = new List<GameObject>();
+        List<AgentSoundComponent> agents = new List<AgentSoundComponent>();
 
         [Space]
         [Header("Sound Property")]
@@ -19,8 +19,11 @@ namespace SoundSystem
         public int reflectionLimit;                             //how many times it reflect a surface
         [Range(0.5f, 1f)] public float diffractionAngleRatio;   //determine the angle of the diffraction of the sound
         public float diffractionRate;
-        public float deflectionRate;                            //how much the volume get deducted every time it reflects
+        public float absorbtionRate;                            //how much the volume get deducted every time it reflects
         public LayerMask layerOfSoundObstacle;
+        [Space]
+        public int animationSwitch = 0;
+        public bool paint = true;
 
         public int RayFrequency                                 //control the ray number for all agents
         {
@@ -30,9 +33,9 @@ namespace SoundSystem
                 else
                 {
                     rayFrequency = value;
-                    foreach (GameObject a in agents)
+                    foreach (AgentSoundComponent a in agents)
                     {
-                        a.GetComponent<AgentSoundComponent>().rayFrequency = value;
+                        a.rayFrequency = value;
                     }
                 }
             }
@@ -55,6 +58,8 @@ namespace SoundSystem
         public float unitLength;
         [HideInInspector]
         public GameObject quadPrefab;
+
+        private int executionBreakTime = 1;
 
         public float Scale
         {
@@ -81,7 +86,8 @@ namespace SoundSystem
 
         private float soundMapTileSize;
 
-        private Queue<AgentSoundComponent> ReceiveSoundQueue = new Queue<AgentSoundComponent>();
+        private Queue<AgentSoundComponent> ReceivedSoundQueue = new Queue<AgentSoundComponent>();
+        private Queue<SoundType> ReceivedSoundType = new Queue<SoundType>();
 
         [SerializeField]
         private bool generatingSoundMap;    //true if is regenerating sound map
@@ -93,21 +99,22 @@ namespace SoundSystem
 
         private Dictionary<int, int> modifiedMapGrids = new Dictionary<int, int>();
 
-        public void RegisterAgent(GameObject agent)
+        public void RegisterAgent(AgentSoundComponent agent)
         {
             agents.Add(agent);
         }
 
-        public void UnregisterAgent(GameObject agent)
+        public void UnregisterAgent(AgentSoundComponent agent)
         {
             agents.Remove(agent);
         }
 
-        public void RequestForSoundResolve(AgentSoundComponent a)
+        public void RequestForSoundResolve(AgentSoundComponent a, SoundType t)
         {
-            if (!ReceiveSoundQueue.Contains(a))
+            if (!ReceivedSoundQueue.Contains(a))
             {
-                ReceiveSoundQueue.Enqueue(a);
+                ReceivedSoundQueue.Enqueue(a);
+                ReceivedSoundType.Enqueue(t);
             }
         }
 
@@ -119,16 +126,47 @@ namespace SoundSystem
             //Debug.Log(Mathf.RoundToInt(1.34f) + " " + Mathf.RoundToInt(1.64f));
         }
 
+        private void Start()
+        {
+            //StartCoroutine(SoundCalculationUpdate());
+        }
+
+        //private IEnumerator SoundCalculationUpdate()
+        //{
+        //    while (true)
+        //    {
+        //        if (!generatingSoundMap && simulationON)
+        //        {
+        //            CheckInput();   //animation switch
+        //            Initialize();
+
+        //            Calculate();
+        //            ResolveSoundCollision();
+        //            Paint();
+        //            ResolveSoundReceive();
+        //            yield return new WaitForSeconds((float)executionBreakTime / 10);
+        //        }
+        //        yield return new WaitForEndOfFrame();
+        //    }
+        //}
+        private float lastTime;
+
         private void Update()
         {
             if (!generatingSoundMap && simulationON)
             {
-                Initialize();
+                if (Time.time - lastTime >= (float)executionBreakTime / 10)
+                {
+                    CheckInput();   //animation switch
+                    Initialize();
 
-                Calculate();
-                ResolveSoundCollision();
-                Paint();
-                ResolveSoundReceive();
+                    Calculate();
+                    ResolveSoundCollision();
+                    Paint();
+                    ResolveSoundReceive();
+
+                    lastTime = Time.time;
+                }
             }
         }
 
@@ -138,6 +176,18 @@ namespace SoundSystem
             if (mapParent) { Destroy(mapParent.gameObject); }
             modifiedMapGrids.Clear();
             GenerateHeatMapLayout();
+        }
+
+        private void CheckInput()
+        {
+            if (Input.GetKey(KeyCode.R))
+            {
+                animationSwitch = 1;
+            }
+            else
+            {
+                animationSwitch = 0;
+            }
         }
 
         private void Initialize()
@@ -167,12 +217,12 @@ namespace SoundSystem
 
         private void Calculate()
         {
-            foreach(GameObject agent in agents)
+            foreach(AgentSoundComponent agent in agents)
             {
                 //two steps:
                 //1. map all the sound point onto the map that from the same sound source
                 //2. resolve sound points from different sound sources
-                agent.GetComponent<AgentSoundComponent>().Calculate();
+                agent.Calculate();
             }
         }
 
@@ -196,12 +246,14 @@ namespace SoundSystem
 
         private void ResolveSoundReceive()
         {
-            while (ReceiveSoundQueue.Count > 0)
+            while (ReceivedSoundQueue.Count > 0)
             {
-                AgentSoundComponent a = ReceiveSoundQueue.Dequeue();
-                List<PointIntensity> trace = TrackSoundSource(a.transform.position, a.agent.radius);
+                AgentSoundComponent a = ReceivedSoundQueue.Dequeue();
+                SoundType t = ReceivedSoundType.Dequeue();
+                List<PointIntensity> trace = TrackSoundSource(a.transform.position, a.agent.radius, t);
                 a.DrawTrackToSoundSource(trace);
             }
+            if (ReceivedSoundType.Count > 0) Debug.Log("received sound type queue is not cleared");
         }
 
         private void Paint()
@@ -222,7 +274,7 @@ namespace SoundSystem
             //}
         }
 
-        private List<PointIntensity> TrackSoundSource(Vector3 pos, float agentRadius)
+        private List<PointIntensity> TrackSoundSource(Vector3 pos, float agentRadius, SoundType s)
         {
             List<PointIntensity> trace = new List<PointIntensity>();
 
@@ -241,7 +293,7 @@ namespace SoundSystem
                 PointIntensity pointIntensity = map[curX, curY].GetComponent<PointIntensity>();
                 trace.Add(pointIntensity);
 
-                float maxIntensity = pointIntensity.net_intensity;
+                float maxIntensity = pointIntensity.RetrieveSoundIntensityAtType(s);
                 int maxX = curX;
                 int maxY = curY;
 
@@ -258,9 +310,10 @@ namespace SoundSystem
                         else if (Physics.Raycast(curPos, destPos-curPos, (destPos-curPos).magnitude + agentRadius, layerOfSoundObstacle, QueryTriggerInteraction.Ignore)) { continue; } //if hit a wall or obstacle
                         else
                         {
-                            if (map[curX + i, curY + j].GetComponent<PointIntensity>().net_intensity > maxIntensity)
+                            float curIntensity = map[curX + i, curY + j].GetComponent<PointIntensity>().RetrieveSoundIntensityAtType(s);
+                            if (curIntensity > maxIntensity)
                             {
-                                maxIntensity = map[curX + i, curY + j].GetComponent<PointIntensity>().net_intensity;
+                                maxIntensity = curIntensity;
                                 maxX = curX + i;
                                 maxY = curY + j;
                             }
@@ -268,7 +321,7 @@ namespace SoundSystem
                     }
                 }
 
-                if (maxIntensity == pointIntensity.net_intensity)
+                if (maxIntensity == pointIntensity.RetrieveSoundIntensityAtType(s))
                 {
                     //reach max
                     return trace;
@@ -282,30 +335,34 @@ namespace SoundSystem
             }
         }
 
-        public void MapSoundData(Vector3 pos, float newIntensity, SoundSegment seg, GameObject source)
+        public void MapSoundData(List<Vector3> positions, List<float> newIntensities, SoundSegment seg, GameObject source)
         {
-            float x = pos.x - startPoint.x;
-            float z = pos.z - startPoint.z;
-
-            int cellX = Mathf.RoundToInt(x / soundMapTileSize);
-            int cellY = Mathf.RoundToInt(z / soundMapTileSize);
- 
-            if (cellX < resolution.x && cellY < resolution.y && cellX >= 0 && cellY >= 0)
+            count = positions.Count;
+            for (int i = 0; i < count; i++)
             {
-                //Debug.Log(cellX + ", " + cellY);
-                map[cellX, cellY].GetComponent<PointIntensity>().AddNewSoundPoint(newIntensity, seg, source);
+                float x = positions[i].x - startPoint.x;
+                float z = positions[i].z - startPoint.z;
 
-                //add this point to modified list
-                int key = cellX * (int)resolution.y + cellY;
-                int value;
-                if (!modifiedMapGrids.TryGetValue(key, out value))
+                int cellX = Mathf.RoundToInt(x / soundMapTileSize);
+                int cellY = Mathf.RoundToInt(z / soundMapTileSize);
+
+                if (cellX < resolution.x && cellY < resolution.y && cellX >= 0 && cellY >= 0)
                 {
-                    //test if the value is already exist in the dictionary, if not we add this value as both key and value
-                    modifiedMapGrids.Add(key, key);
-                }
+                    //Debug.Log(cellX + ", " + cellY);
+                    map[cellX, cellY].GetComponent<PointIntensity>().AddNewSoundPoint(newIntensities[i], seg, source.name);
 
-                //draw yellow line to indicate the mapping
-                if (drawPointDistribution) { Debug.DrawLine(pos, map[cellX, cellY].transform.position, Color.yellow); }
+                    //add this point to modified list
+                    int key = cellX * (int)resolution.y + cellY;
+                    int value;
+                    if (!modifiedMapGrids.TryGetValue(key, out value))
+                    {
+                        //test if the value is already exist in the dictionary, if not we add this value as both key and value
+                        modifiedMapGrids.Add(key, key);
+                    }
+
+                    //draw yellow line to indicate the mapping
+                    if (drawPointDistribution) { Debug.DrawLine(positions[i], map[cellX, cellY].transform.position, Color.yellow); }
+                }
             }
         }
 
@@ -369,6 +426,8 @@ namespace SoundSystem
             fadingSpeed = GUILayout.HorizontalSlider(fadingSpeed, 0.1f, 5f);
             GUILayout.Label("Step distance");
             stepDistance = float.Parse(GUILayout.TextField(stepDistance.ToString()));
+            GUILayout.Label("ExecutionRate");
+            executionBreakTime = int.Parse(GUILayout.TextField(executionBreakTime.ToString()));
         }
     }
 }

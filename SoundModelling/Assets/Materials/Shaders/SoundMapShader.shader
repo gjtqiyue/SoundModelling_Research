@@ -2,9 +2,8 @@
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
 		_Color ("Color", Color) = (0,0,0,0)
-		_Transparency ("Transparency", Range(0.0, 0.5)) = 0.25
+		_Transparency ("Transparency", float) = 0
     }
     SubShader
     {
@@ -38,16 +37,15 @@
                 float4 vertex : SV_POSITION;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
 			float4 _Color;
+			int _AnimationSwitch;
 			float _Transparency;
+			float _Intensity;
 
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -55,13 +53,23 @@
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
+				fixed4 col = (0, 0, 0, 0);
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
 
+				col.rbg = _Color.rbg;
+				//col.a = _Color.a;
+				if (_AnimationSwitch == 1) 
+				{
+					col.a = _Color.a * sin(_Time.w - _Intensity);
+				}
+				else 
+				{
+					col.a = _Color.a;
+				}
 				//_Color.a = _Transparency;
 
-                return _Color;
+                return col;
             }
             ENDCG
         }

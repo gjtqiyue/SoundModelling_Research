@@ -6,6 +6,7 @@ TagManager:
   tags:
   - DiffractionPoint
   - Wall
+  - Ground
   layers:
   - Default
   - TransparentFX

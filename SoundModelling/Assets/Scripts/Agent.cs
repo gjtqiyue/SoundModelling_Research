@@ -4,13 +4,14 @@ using UnityEngine;
 using UnityEngine.AI;
 using SoundSystem;
 
-public class Agent : AgentWithSound
+public class Agent : AgentWithSound 
 {
     public enum AgentStatus
     {
         InWaitingTime,
         InPatrolling,
-        InSearching
+        InSearching,
+        InControlled
     }
 
     public float patrolSpeed;
@@ -54,10 +55,19 @@ public class Agent : AgentWithSound
 
     private void Update()
     {
-        if (canMakeSound)
-            soundComp.MakeSound(gameObject, transform.position, volume, typeToMake, 60, duration);
+        if (canMakeSound && !soundComp.IsMakingSound() && SystemController.Instance.IsSimulationOn())
+        {
+            int t = (int)Random.Range(0, 4);
+            SoundType s = (SoundType)t;
+            soundComp.MakeSound(gameObject, transform.position, 30, s, 360, 500);
+        }
 
         DoBehaviour();
+    }
+
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
     }
 
     private void DoBehaviour()
@@ -91,16 +101,23 @@ public class Agent : AgentWithSound
                 }
 
                 // if we are not at the path destination, we move to there
-                if (Vector3.SqrMagnitude(searchPath[0].pos - transform.position) > 0.5f)
+                Vector3 dest = new Vector3(searchPath[searchPath.Count-1].pos.x, 0, searchPath[searchPath.Count - 1].pos.z);
+                if (Vector3.SqrMagnitude(dest - transform.position) > threshold)
                 {
-                    Vector3 dest = new Vector3(searchPath[0].pos.x, 0, searchPath[0].pos.z);
-                    transform.position = Vector3.MoveTowards(transform.position, dest, searchSpeed);
-                    Debug.Log(dest);
+                    //transform.position = Vector3.MoveTowards(transform.position, dest, searchSpeed);
+                    gameObject.GetComponent<NavMeshAgent>().SetDestination(dest);
+                    //Debug.Log(dest + " " + Vector3.SqrMagnitude(searchPath[0].pos - transform.position));
+
                 }
                 else
                 {
-                    searchPath.RemoveAt(0);
+                    //searchPath.RemoveAt(0);
+                    searchPath.Clear();
                 }
+
+                break;
+
+            case AgentStatus.InControlled:
 
                 break;
 
@@ -191,6 +208,7 @@ public class Agent : AgentWithSound
         {
             searchPath = path;
         }
-        
+
     }
+
 }

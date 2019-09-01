@@ -4,8 +4,9 @@ using UnityEngine;
 
 namespace SoundSystem
 {
-    public abstract class AgentWithSound : MonoBehaviour
+    public abstract class AgentWithSound : Controllable
     {
+        public bool canTrackSound;
         public float radius;
 
         public abstract void SearchSoundSource(List<PointIntensity> path);
